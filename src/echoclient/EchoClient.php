@@ -110,7 +110,7 @@ class EchoClient
         }
         else
         {
-            $this->getLogger()->error('Failed sending event to echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestProperties'=>$props);
+            $this->getLogger()->error('Failed sending event to echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestProperties'=>$props));
         }
     }
 
