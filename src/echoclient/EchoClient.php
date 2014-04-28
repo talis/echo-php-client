@@ -55,17 +55,6 @@ class EchoClient
         {
             throw new \Exception('Missing define: PERSONA_TOKENCACHE_DB');
         }
-
-//        $params = array(
-//            'OAUTH_USER'=>OAUTH_USER,
-//            'OAUTH_SECRET'=>OAUTH_SECRET,
-//            'PERSONA_HOST'=>PERSONA_HOST,
-//            'PERSONA_OAUTH_ROUTE'=>PERSONA_OAUTH_ROUTE,
-//            'PERSONA_TOKENCACHE_HOST'=>PERSONA_TOKENCACHE_HOST,
-//            'PERSONA_TOKENCACHE_PORT'=>PERSONA_TOKENCACHE_PORT,
-//            'PERSONA_TOKENCACHE_DB'=>PERSONA_TOKENCACHE_DB
-//        );
-//        $this->getLogger()->debug('EchoClient config', $params);
     }
 
     function createEvent($class, $source, array $props=array())
@@ -79,7 +68,7 @@ class EchoClient
             /*
              * If no echo server is defined then log the event for debugging purposes and fail silently...
              */
-            $this->getLogger()->warning('Echo server is not defined, not sending event - '.$class, $props);
+            $this->getLogger()->warning('Echo server is not defined (missing ECHO_HOST define), not sending event - '.$class, $props);
             return;
         }
 
@@ -90,7 +79,7 @@ class EchoClient
         /*
          * TODO Remove this debugging
          */
-        error_log('Persona token = '.$personaToken);
+        $this->getLogger()->debug('Persona token = '.$personaToken);
 
         $headers = array(
             'Content-Type'=>'application/json',
@@ -106,7 +95,7 @@ class EchoClient
 
         if ($response->isSuccessful())
         {
-            $this->getLogger()->info('Success sending event to echo - '.$class, $props);
+            $this->getLogger()->debug('Success sending event to echo - '.$class, $props);
         }
         else
         {
