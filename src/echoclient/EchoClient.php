@@ -7,19 +7,6 @@ use \Monolog\Logger;
 
 /**
  * Sends events to Echo, if an echo server is enabled.
- *
- * ------------------------------------------------------------------------------------------------------------------
- *
- * TODO
- *
- *   There are some things to think about before we can use this external client, the biggest being how we deal
- *   with PersonaClient in here.  We can either pass in a PersonaClient (setPersonaClient(xx)) or pass in some
- *   kind of PersonaClient config object or just pass in the constants maybe?  (Or just expect them to be there
- *   from the calling project).
- *
- *
- * ------------------------------------------------------------------------------------------------------------------
- *
  */
 class EchoClient
 {
@@ -69,17 +56,16 @@ class EchoClient
             throw new \Exception('Missing define: PERSONA_TOKENCACHE_DB');
         }
 
-        $params = array(
-            'OAUTH_USER'=>OAUTH_USER,
-            'OAUTH_SECRET'=>OAUTH_SECRET,
-            'PERSONA_HOST'=>PERSONA_HOST,
-            'PERSONA_OAUTH_ROUTE'=>PERSONA_OAUTH_ROUTE,
-            'PERSONA_TOKENCACHE_HOST'=>PERSONA_TOKENCACHE_HOST,
-            'PERSONA_TOKENCACHE_PORT'=>PERSONA_TOKENCACHE_PORT,
-            'PERSONA_TOKENCACHE_DB'=>PERSONA_TOKENCACHE_DB
-        );
-
-        $this->getLogger()->warning('EchoClient config', $params);
+//        $params = array(
+//            'OAUTH_USER'=>OAUTH_USER,
+//            'OAUTH_SECRET'=>OAUTH_SECRET,
+//            'PERSONA_HOST'=>PERSONA_HOST,
+//            'PERSONA_OAUTH_ROUTE'=>PERSONA_OAUTH_ROUTE,
+//            'PERSONA_TOKENCACHE_HOST'=>PERSONA_TOKENCACHE_HOST,
+//            'PERSONA_TOKENCACHE_PORT'=>PERSONA_TOKENCACHE_PORT,
+//            'PERSONA_TOKENCACHE_DB'=>PERSONA_TOKENCACHE_DB
+//        );
+//        $this->getLogger()->debug('EchoClient config', $params);
     }
 
     function createEvent($class, $source, array $props=array())
@@ -93,13 +79,18 @@ class EchoClient
             /*
              * If no echo server is defined then log the event for debugging purposes and fail silently...
              */
-            $this->getLogger()->info('Echo server is not defined - not sending event', array('class'=>$class, 'source'=>$source, 'props'=>$props));
+            $this->getLogger()->warning('Echo server is not defined, not sending event - '.$class, $props);
             return;
         }
 
         $eventJson = $this->getEventJson($class, $source, $props);
         $arrPersonaToken = $this->getPersonaClient()->obtainNewToken(OAUTH_USER, OAUTH_SECRET);
         $personaToken = $arrPersonaToken['access_token'];
+
+        /*
+         * TODO Remove this debugging
+         */
+        error_log('Persona token = '.$personaToken);
 
         $headers = array(
             'Content-Type'=>'application/json',
@@ -115,11 +106,11 @@ class EchoClient
 
         if ($response->isSuccessful())
         {
-            $this->getLogger()->error('Sent event to echo successfully - code = '.$response->getStatusCode());
+            $this->getLogger()->info('Success sending event to echo - '.$class, $props);
         }
         else
         {
-            $this->getLogger()->error('Failed sending event to echo - code = '.$response->getStatusCode().' - '.$response->getBody(true));
+            $this->getLogger()->error('Failed sending event to echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestProperties'=>$props);
         }
     }
 
@@ -150,7 +141,7 @@ class EchoClient
 
     /**
      * For mocking
-     * TODO This would be better as a trait as duplicated in BaseModel.
+     * TODO This would be better as a trait as it's duplicated in BaseModel.
      *
      * @return \personaclient\PersonaClient
      */
@@ -176,7 +167,7 @@ class EchoClient
         if (self::$logger == null)
         {
             /*
-             * If an instance of the MonoLog Logger hasn't been passed in then use our own to a file.
+             * If an instance of the MonoLog Logger hasn't been passed in then default to stderr.
              */
             self::$logger = new Logger('echoclient');
             self::$logger->pushHandler(new StreamHandler('php://stderr', Logger::DEBUG));
@@ -184,5 +175,4 @@ class EchoClient
 
         return self::$logger;
     }
-
 }
