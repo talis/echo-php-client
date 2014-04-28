@@ -68,6 +68,18 @@ class EchoClient
         {
             throw new \Exception('Missing define: PERSONA_TOKENCACHE_DB');
         }
+
+        $params = array(
+            'OAUTH_USER'=>OAUTH_USER,
+            'OAUTH_SECRET'=>OAUTH_SECRET,
+            'PERSONA_HOST'=>PERSONA_HOST,
+            'PERSONA_OAUTH_ROUTE'=>PERSONA_OAUTH_ROUTE,
+            'PERSONA_TOKENCACHE_HOST'=>PERSONA_TOKENCACHE_HOST,
+            'PERSONA_TOKENCACHE_PORT'=>PERSONA_TOKENCACHE_PORT,
+            'PERSONA_TOKENCACHE_DB'=>PERSONA_TOKENCACHE_DB
+        );
+
+        $this->getLogger()->warning('EchoClient config', $params);
     }
 
     function createEvent($class, $source, array $props=array())
@@ -89,7 +101,10 @@ class EchoClient
         $arrPersonaToken = $this->getPersonaClient()->obtainNewToken(OAUTH_USER, OAUTH_SECRET);
         $personaToken = $arrPersonaToken['access_token'];
 
-        $headers = array('Content-Type'=>'application/json', 'Authorization'=>'Bearer '.$personaToken);
+        $headers = array(
+            'Content-Type'=>'application/json',
+            'Authorization'=>'Bearer '.$personaToken
+        );
 
         $client = new Client();
         $request = $client->post($eventUrl);
@@ -100,7 +115,7 @@ class EchoClient
 
         if ($response->isSuccessful())
         {
-            $this->getLogger()->error('Send event to echo successfully - code = '.$response->getStatusCode());
+            $this->getLogger()->error('Sent event to echo successfully - code = '.$response->getStatusCode());
         }
         else
         {
