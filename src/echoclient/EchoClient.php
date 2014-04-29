@@ -61,17 +61,16 @@ class EchoClient
     {
         $baseUrl = $this->getBaseUrl();
 
-        $eventUrl = $baseUrl.'/events';
-
         if (!$baseUrl)
         {
             /*
              * If no echo server is defined then log the event for debugging purposes and fail silently...
              */
             $this->getLogger()->warning('Echo server is not defined (missing ECHO_HOST define), not sending event - '.$class, $props);
-            return;
+            return false;
         }
 
+        $eventUrl = $baseUrl.'/events';
         $eventJson = $this->getEventJson($class, $source, $props);
         $arrPersonaToken = $this->getPersonaClient()->obtainNewToken(OAUTH_USER, OAUTH_SECRET);
         $personaToken = $arrPersonaToken['access_token'];
@@ -79,6 +78,7 @@ class EchoClient
         /*
          * TODO Remove this debugging
          */
+
         $this->getLogger()->debug('Persona token = '.$personaToken);
 
         $headers = array(
@@ -86,7 +86,7 @@ class EchoClient
             'Authorization'=>'Bearer '.$personaToken
         );
 
-        $client = new Client();
+        $client = $this->getHttpClient();
         $request = $client->post($eventUrl);
         $request->setHeaders($headers);
         $request->setBody($eventJson);
@@ -96,10 +96,12 @@ class EchoClient
         if ($response->isSuccessful())
         {
             $this->getLogger()->debug('Success sending event to echo - '.$class, $props);
+            return true;
         }
         else
         {
             $this->getLogger()->error('Failed sending event to echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestProperties'=>$props));
+            return false;
         }
     }
 
@@ -122,14 +124,25 @@ class EchoClient
     {
         if (!defined('ECHO_HOST'))
         {
-            return FALSE;
+            return false;
         }
 
         return ECHO_HOST.'/'.self::ECHO_API_VERSION;
     }
 
     /**
-     * For mocking
+     * To allow mocking of the Guzzle client for testing.
+     *
+     * @return Client
+     */
+    protected function getHttpClient()
+    {
+        return new Client();
+    }
+
+    /**
+     * To allow mocking of the PersonaClient for testing.
+     *
      * TODO This would be better as a trait as it's duplicated in BaseModel.
      *
      * @return \personaclient\PersonaClient
@@ -149,6 +162,8 @@ class EchoClient
     }
 
     /**
+     * Get the current Logger instance.
+     *
      * @return Logger
      */
     protected function getLogger()
@@ -159,7 +174,7 @@ class EchoClient
              * If an instance of the MonoLog Logger hasn't been passed in then default to stderr.
              */
             self::$logger = new Logger('echoclient');
-            self::$logger->pushHandler(new StreamHandler('php://stderr', Logger::DEBUG));
+            self::$logger->pushHandler(new StreamHandler('/tmp/echo-client.log', Logger::DEBUG));
         }
 
         return self::$logger;
