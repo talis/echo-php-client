@@ -13,6 +13,7 @@ class EchoClient
     const ECHO_API_VERSION = 1;
 
     private $personaClient;
+    private $debugEnabled = false;
     private static $logger;
 
     function __construct()
@@ -75,11 +76,11 @@ class EchoClient
         $arrPersonaToken = $this->getPersonaClient()->obtainNewToken(OAUTH_USER, OAUTH_SECRET);
         $personaToken = $arrPersonaToken['access_token'];
 
-        /*
-         * TODO Remove this debugging
-         */
-
-        $this->getLogger()->debug('Persona token = '.$personaToken);
+        if ($this->isDebugEnabled())
+        {
+            // We want this logged as warning so we always see it (if debug mode is enabled for this class, which should only ever be used in development)
+            $this->getLogger()->warning('EchoClient - using Persona token = '.$personaToken);
+        }
 
         $headers = array(
             'Content-Type'=>'application/json',
@@ -103,6 +104,26 @@ class EchoClient
             $this->getLogger()->error('Failed sending event to echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestProperties'=>$props));
             return false;
         }
+    }
+
+    /**
+     * Enable debug mode for this client.  If this is enabled we log things like the Persona client.
+     * Only use in development, not production!
+     * @param bool $bDebugEnabled Whether debug mode should be enabled or not (default = false)
+     */
+    public function setDebugEnabled($bDebugEnabled)
+    {
+        $this->debugEnabled = $bDebugEnabled;
+    }
+
+    /**
+     * Is debugging enabled for this class?
+     * We log out things like the Persona token etc.  (Only to be used in development!)
+     * @return bool
+     */
+    public function isDebugEnabled()
+    {
+        return $this->debugEnabled;
     }
 
     /**
