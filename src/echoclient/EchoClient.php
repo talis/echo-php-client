@@ -88,9 +88,10 @@ class EchoClient
         );
 
         $client = $this->getHttpClient();
-        $request = $client->post($eventUrl);
-        $request->setHeaders($headers);
-        $request->setBody($eventJson);
+        $request = $client->post($eventUrl, $headers, $eventJson, array('connect_timeout'=>2));
+
+//        $request->setHeaders($headers);
+//        $request->setBody($eventJson);
 
         $response = $request->send();
 
