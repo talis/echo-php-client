@@ -159,7 +159,7 @@ class EchoClient
      */
     protected function getHttpClient()
     {
-        return new Client();
+        return new Client(null, array('request.options'=>array('exceptions'=>false)));
     }
 
     /**
