@@ -87,22 +87,27 @@ class EchoClient
             'Authorization'=>'Bearer '.$personaToken
         );
 
-        $client = $this->getHttpClient();
-        $request = $client->post($eventUrl, $headers, $eventJson, array('connect_timeout'=>2));
-
-//        $request->setHeaders($headers);
-//        $request->setBody($eventJson);
-
-        $response = $request->send();
-
-        if ($response->isSuccessful())
+        try
         {
-            $this->getLogger()->debug('Success sending event to echo - '.$class, $props);
-            return true;
+            $client = $this->getHttpClient();
+            $request = $client->post($eventUrl, $headers, $eventJson, array('connect_timeout'=>2));
+            $response = $request->send();
+
+            if ($response->isSuccessful())
+            {
+                $this->getLogger()->debug('Success sending event to echo - '.$class, $props);
+                return true;
+            }
+            else
+            {
+                $this->getLogger()->warning('Failed sending event to echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestProperties'=>$props));
+                return false;
+            }
         }
-        else
+        catch (\Exception $e)
         {
-            $this->getLogger()->error('Failed sending event to echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestProperties'=>$props));
+            // For any exception issue, just log the issue and fail silently.  E.g. failure to connect to echo server, or whatever.
+            $this->getLogger()->warning('Failed sending event to echo - '.$class, array('exception'=>get_class($e), 'message'=>$e->getMessage(), 'requestProperties'=>$props));
             return false;
         }
     }
@@ -159,7 +164,7 @@ class EchoClient
      */
     protected function getHttpClient()
     {
-        return new Client(null, array('request.options'=>array('exceptions'=>false)));
+        return new Client();
     }
 
     /**
