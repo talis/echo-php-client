@@ -29,6 +29,7 @@ $ php composer.phar update
 In your code, do the following to create events:
 
 ```php
+$echoClient = new \echoClient\EchoClient(); // see constructor for mandatory constants
 $echoClient->createEvent(
   "event.class", 
   "event.source", 
