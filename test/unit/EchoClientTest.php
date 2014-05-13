@@ -4,6 +4,8 @@ if (!defined('APPROOT'))
     define('APPROOT', dirname(dirname(__DIR__)));
 }
 
+date_default_timezone_set('Europe/London');
+
 /**
  * Unit tests for EchoClient.
  * @runTestsInSeparateProcesses
