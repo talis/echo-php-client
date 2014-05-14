@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "77ef90eabfdaf8b5c0e4a18c198e1626",
+    "hash": "6ce849be87c62be603b8e5af66cf8afb",
     "packages": [
         {
             "name": "guzzle/guzzle",
@@ -723,16 +723,16 @@
         },
         {
             "name": "talis/persona-php-client",
-            "version": "0.2.1",
+            "version": "0.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/talis/persona-php-client.git",
-                "reference": "477ff2fad23071be928627328e86a6553ff775bb"
+                "reference": "09ba67309dffb3e574307ab781cf7d6d3904bd55"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/talis/persona-php-client/zipball/477ff2fad23071be928627328e86a6553ff775bb",
-                "reference": "477ff2fad23071be928627328e86a6553ff775bb",
+                "url": "https://api.github.com/repos/talis/persona-php-client/zipball/09ba67309dffb3e574307ab781cf7d6d3904bd55",
+                "reference": "09ba67309dffb3e574307ab781cf7d6d3904bd55",
                 "shasum": ""
             },
             "require": {
@@ -765,10 +765,10 @@
                 "php"
             ],
             "support": {
-                "source": "https://github.com/talis/persona-php-client/tree/0.2.1",
+                "source": "https://github.com/talis/persona-php-client/tree/0.2.2",
                 "issues": "https://github.com/talis/persona-php-client/issues"
             },
-            "time": "2014-05-13 13:12:40"
+            "time": "2014-05-14 15:11:21"
         }
     ],
     "packages-dev": [
