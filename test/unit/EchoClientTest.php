@@ -95,6 +95,32 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $this->assertTrue(isset($result['results']));
     }
 
+    function testHitsWithOptsReturnsExpectedJSON()
+    {
+        $this->setRequiredDefines();
+
+        $stubPersonaClient = $this->getMock('\personaclient\PersonaClient', array(), array(), '', false);
+        $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
+
+        $response = new \Guzzle\Http\Message\Response('200');
+        $response->setBody('{"head":{"type":"hits","class":"player.view","group_by":"source","count":27},"results":[{"source":"web.talis-com.b50367b.2014-05-15","hits":45},{"source":"web.talis-com.b692220.2014-05-15","hits":9},{"source":"mobile.android-v1.9","hits":16},{"source":"web.talis-com.f1afa4f.2014-05-13","hits":21},{"source":"mobile.android-v1.7","hits":48},{"source":"web.talis-com.d165ea5.2014-05-01","hits":411},{"source":"web.talis-com.3dceffd.2014-05-15","hits":8},{"source":"mobile.android-v1.6","hits":41},{"source":"web.talis-com.35baf27.2014-04-29","hits":50},{"source":"web.talis-com.13f1318.2014-05-14","hits":18},{"source":"web.talis-com.no-release","hits":219},{"source":"mobile.iOS-v1.97","hits":5},{"source":"web.talis-com-no-release","hits":23},{"source":"web.talis-com.12f4d8c.2014-04-29","hits":29},{"source":"web.talis-com.4a51b66.2014-04-25","hits":56},{"source":"mobile.android-v1.3","hits":4},{"source":"mobile.android-v2.0","hits":39},{"source":"web.talis-com.9df593e.2014-04-17","hits":44},{"source":"web.talis-com.8dac333.2014-04-17","hits":1},{"source":"mobile.iOS-v1.99","hits":60},{"source":"mobile.iOS-v1.98","hits":116},{"source":"web.talis-com.d5e099c.2014-05-15","hits":2},{"source":"mobile.android-v1.8","hits":16},{"source":"web.talis-com.64ade28.2014-04-17","hits":22},{"source":"mobile.iOS-v1.95","hits":10},{"source":"mobile.android-v1.4","hits":1},{"source":"mobile.android-v1.5","hits":20}]}');
+
+        $mockRequest = $this->getMock('\Guzzle\Http\Message\Request', array('send'), array('get',''));
+        $mockRequest->expects($this->once())->method('send')->will($this->returnValue($response));
+
+        $stubHttpClient = $this->getMock('\Guzzle\Http\Client', array('get'));
+        $stubHttpClient->expects($this->once())->method('get')->with('http://example.com:3002/1/analytics/hits?class=player.view&key=some_key&value=some_value')->will($this->returnValue($mockRequest));
+
+        $echoClient = $this->getMock('\echoclient\EchoClient', array('getPersonaClient', 'getHttpClient'));
+        $echoClient->expects($this->once())->method('getPersonaClient')->will($this->returnValue($stubPersonaClient));
+        $echoClient->expects($this->once())->method('getHttpClient')->will($this->returnValue($stubHttpClient));
+
+        $result = $echoClient->getHits('player.view',array('key'=>'some_key','value'=>'some_value'));
+
+        $this->assertTrue(isset($result['head']));
+        $this->assertTrue(isset($result['results']));
+    }
+
     function testHitsCallsAnalytics()
     {
         $this->setRequiredDefines();
