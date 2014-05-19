@@ -12,6 +12,11 @@ class EchoClient
 {
     const ECHO_API_VERSION = 1;
 
+    const ECHO_ANALYTICS_HITS = 'hits';
+    const ECHO_ANALYTICS_MAX = 'max';
+    const ECHO_ANALYTICS_SUM = 'sum';
+    const ECHO_ANALYTICS_AVG = 'average';
+
     private $personaClient;
     private $debugEnabled = false;
     private static $logger;
@@ -72,6 +77,7 @@ class EchoClient
         if (!$baseUrl)
         {
             // fail silently when creating events, should not stop user interaction as echo events are collected on a best-endeavours basis
+            $this->getLogger()->warning('Echo server is not defined (missing ECHO_HOST define), not sending event - '.$class, $props);
             return false;
         }
 
@@ -113,7 +119,7 @@ class EchoClient
      */
     public function getHits($class, $opts = array())
     {
-        return $this->getAnalytics($class,'hits',$opts);
+        return $this->getAnalytics($class,self::ECHO_ANALYTICS_HITS,$opts);
     }
 
     /**
@@ -126,7 +132,7 @@ class EchoClient
      */
     public function getSum($class, $opts = array())
     {
-        return $this->getAnalytics($class,'sum',$opts);
+        return $this->getAnalytics($class,self::ECHO_ANALYTICS_SUM,$opts);
     }
 
     /**
@@ -139,7 +145,7 @@ class EchoClient
      */
     public function getMax($class, $opts = array())
     {
-        return $this->getAnalytics($class,'max',$opts);
+        return $this->getAnalytics($class,self::ECHO_ANALYTICS_MAX,$opts);
     }
 
     /**
@@ -152,7 +158,7 @@ class EchoClient
      */
     public function getAverage($class, $opts = array())
     {
-        return $this->getAnalytics($class,'average',$opts);
+        return $this->getAnalytics($class,self::ECHO_ANALYTICS_AVG,$opts);
     }
 
     /**
@@ -164,7 +170,7 @@ class EchoClient
      */
     protected function getAnalytics($class,$type,$opts=array())
     {
-        if (!in_array($type,array("hits","sum","max","average")))
+        if (!in_array($type,array(self::ECHO_ANALYTICS_HITS,self::ECHO_ANALYTICS_AVG,self::ECHO_ANALYTICS_MAX,self::ECHO_ANALYTICS_SUM)))
         {
             throw new \Exception("You must supply a valid analytics type");
         }
