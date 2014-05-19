@@ -197,7 +197,7 @@ class EchoClient
         if ($response->isSuccessful())
         {
             $this->getLogger()->debug('Success getting analytics from echo - '.$type, $opts);
-            $json = json_decode($response->getBody(true));
+            $json = json_decode($response->getBody(true),true);
             if ($json)
             {
                 return $json;
