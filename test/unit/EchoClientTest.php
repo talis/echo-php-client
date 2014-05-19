@@ -95,6 +95,16 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $this->assertTrue(isset($result['results']));
     }
 
+    function testHitsCallsAnalytics()
+    {
+        $this->setRequiredDefines();
+
+        $echoClient = $this->getMock('\echoclient\EchoClient', array('getAnalytics'));
+        $echoClient->expects($this->once()->method('getAnalytics')->with("some.class","hits"));
+        
+        $echoClient->getHits("some.class");
+    }
+
     /* ---------------------------------------------------------------------------------------------------------- */
 
     /**
