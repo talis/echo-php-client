@@ -188,12 +188,8 @@ class EchoClient
         }
 
         $eventUrl = $baseUrl.'/analytics/'.$type.'?class='.urlencode($class);
-        foreach($opts as $key=>$value)
-        {
-            if (!empty($value))
-            {
-                $eventUrl .= '&'.$key.'='.urlencode($value);
-            }
+        if (count($opts)>0) {
+            $eventUrl .= http_build_query($opts);
         }
 
         $client = $this->getHttpClient();
