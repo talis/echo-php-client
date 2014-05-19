@@ -100,9 +100,39 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $this->setRequiredDefines();
 
         $echoClient = $this->getMock('\echoclient\EchoClient', array('getAnalytics'));
-        $echoClient->expects($this->once()->method('getAnalytics')->with("some.class","hits"));
-        
+        $echoClient->expects($this->once())->method('getAnalytics')->with("some.class","hits");
+
         $echoClient->getHits("some.class");
+    }
+
+    function testAverageCallsAnalytics()
+    {
+        $this->setRequiredDefines();
+
+        $echoClient = $this->getMock('\echoclient\EchoClient', array('getAnalytics'));
+        $echoClient->expects($this->once())->method('getAnalytics')->with("some.class","average");
+
+        $echoClient->getAverage("some.class");
+    }
+
+    function testSumCallsAnalytics()
+    {
+        $this->setRequiredDefines();
+
+        $echoClient = $this->getMock('\echoclient\EchoClient', array('getAnalytics'));
+        $echoClient->expects($this->once())->method('getAnalytics')->with("some.class","sum");
+
+        $echoClient->getSum("some.class");
+    }
+
+    function testMaxCallsAnalytics()
+    {
+        $this->setRequiredDefines();
+
+        $echoClient = $this->getMock('\echoclient\EchoClient', array('getAnalytics'));
+        $echoClient->expects($this->once())->method('getAnalytics')->with("some.class","max");
+
+        $echoClient->getMax("some.class");
     }
 
     /* ---------------------------------------------------------------------------------------------------------- */
