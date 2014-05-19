@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "889e85a7bdef6b6785bd3822b0781711",
+    "hash": "70cc1b59ed734b723e69002109381a9f",
     "packages": [
         {
             "name": "guzzle/guzzle",
@@ -723,7 +723,7 @@
         },
         {
             "name": "talis/persona-php-client",
-            "version": "0.2.3",
+            "version": "0.2.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/talis/persona-php-client.git",
@@ -765,7 +765,7 @@
                 "php"
             ],
             "support": {
-                "source": "https://github.com/talis/persona-php-client/tree/master",
+                "source": "https://github.com/talis/persona-php-client/tree/0.2.4",
                 "issues": "https://github.com/talis/persona-php-client/issues"
             },
             "time": "2014-05-14 15:32:11"
