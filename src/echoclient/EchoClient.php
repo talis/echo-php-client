@@ -65,11 +65,11 @@ class EchoClient
 
     /**
      * Add an event to echo
-     * @param $class
-     * @param $source
+     * @param string $class
+     * @param string $source
      * @param array $props
-     * @param $userId
-     * @return bool
+     * @param string|null $userId
+     * @return bool True if successful, else false
      */
     public function createEvent($class, $source, array $props=array(), $userId = null)
     {
@@ -248,6 +248,14 @@ class EchoClient
         self::$logger = $logger;
     }
 
+    /**
+     * Create a json encoded string that represents a echo event
+     * @param string $class
+     * @param string $source
+     * @param array $props
+     * @param string|null $userId
+     * @return string json encoded echo event
+     */
     protected function getEventJson($class, $source, array $props=array(), $userId=null)
     {
         $event = array('class'=>$class, 'source'=>$source, 'props'=>$props);
