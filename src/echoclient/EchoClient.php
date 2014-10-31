@@ -68,9 +68,10 @@ class EchoClient
      * @param $class
      * @param $source
      * @param array $props
+     * @param $userId
      * @return bool
      */
-    public function createEvent($class, $source, array $props=array())
+    public function createEvent($class, $source, array $props=array(), $userId = null)
     {
         $baseUrl = $this->getBaseUrl();
 
@@ -82,7 +83,7 @@ class EchoClient
         }
 
         $eventUrl = $baseUrl.'/events';
-        $eventJson = $this->getEventJson($class, $source, $props);
+        $eventJson = $this->getEventJson($class, $source, $props, $userId);
 
         try
         {
@@ -247,9 +248,15 @@ class EchoClient
         self::$logger = $logger;
     }
 
-    protected function getEventJson($class, $source, array $props=array())
+    protected function getEventJson($class, $source, array $props=array(), $userId=null)
     {
-        return json_encode(array('class'=>$class, 'source'=>$source, 'props'=>$props));
+        $event = array('class'=>$class, 'source'=>$source, 'props'=>$props);
+        if(!empty($userId))
+        {
+            $event['user'] = $userId;
+        }
+
+        return json_encode($event);
     }
 
     /**
