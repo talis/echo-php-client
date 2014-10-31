@@ -65,12 +65,13 @@ class EchoClient
 
     /**
      * Add an event to echo
-     * @param $class
-     * @param $source
+     * @param string $class
+     * @param string $source
      * @param array $props
-     * @return bool
+     * @param string|null $userId
+     * @return bool True if successful, else false
      */
-    public function createEvent($class, $source, array $props=array())
+    public function createEvent($class, $source, array $props=array(), $userId = null)
     {
         $baseUrl = $this->getBaseUrl();
 
@@ -82,7 +83,7 @@ class EchoClient
         }
 
         $eventUrl = $baseUrl.'/events';
-        $eventJson = $this->getEventJson($class, $source, $props);
+        $eventJson = $this->getEventJson($class, $source, $props, $userId);
 
         try
         {
@@ -247,9 +248,23 @@ class EchoClient
         self::$logger = $logger;
     }
 
-    protected function getEventJson($class, $source, array $props=array())
+    /**
+     * Create a json encoded string that represents a echo event
+     * @param string $class
+     * @param string $source
+     * @param array $props
+     * @param string|null $userId
+     * @return string json encoded echo event
+     */
+    protected function getEventJson($class, $source, array $props=array(), $userId=null)
     {
-        return json_encode(array('class'=>$class, 'source'=>$source, 'props'=>$props));
+        $event = array('class'=>$class, 'source'=>$source, 'props'=>$props);
+        if(!empty($userId))
+        {
+            $event['user'] = $userId;
+        }
+
+        return json_encode($event);
     }
 
     /**
