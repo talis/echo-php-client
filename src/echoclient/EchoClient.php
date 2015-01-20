@@ -111,6 +111,71 @@ class EchoClient
     }
 
     /**
+     * Get most recent events of $class with property matching $key and $value, up to a $limit
+     * @param $class
+     * @param null $key
+     * @param null $value
+     * @param int $limit
+     * @return bool
+     * @throws \Exception
+     */
+    public function getRecentEvents($class=null, $key=null, $value=null, $limit=25)
+    {
+        $baseUrl = $this->getBaseUrl();
+
+        if (!$baseUrl)
+        {
+            // fail silently when creating events, should not stop user interaction as echo events are collected on a best-endeavours basis
+            $this->getLogger()->warning('Echo server is not defined (missing ECHO_HOST define), not getting events - '.$class);
+            return false;
+        }
+
+        $eventUrl = $baseUrl.'/events?limit='.$limit;
+        if (!empty($class))
+        {
+            $eventUrl .= '&class='.urlencode($class);
+        }
+        if (!empty($key))
+        {
+            $eventUrl .= '&key='.urlencode($key);
+        }
+        if (!empty($value))
+        {
+            $eventUrl .= '&value='.urlencode($value);
+        }
+
+        try
+        {
+            $client = $this->getHttpClient();
+            $request = $client->get($eventUrl, $this->getHeaders(), array('connect_timeout'=>2));
+            $response = $request->send();
+
+            if ($response->isSuccessful())
+            {
+                $result = json_decode($response->getBody(true),true);
+                if (isset($result['events']))
+                {
+                    $this->getLogger()->debug('Success getting events from echo - '.$class);
+                    return $result['events'];
+                }
+                $this->getLogger()->warning('Failed getting events from echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true)));
+                throw new \Exception("Failed getting events from echo, could not decode response");
+            }
+            else
+            {
+                $this->getLogger()->warning('Failed getting events from echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true)));
+                throw new \Exception("Failed getting events from echo, response was not successful");
+            }
+        }
+        catch (\Exception $e)
+        {
+            // For any exception issue, just log the issue and fail silently.  E.g. failure to connect to echo server, or whatever.
+            $this->getLogger()->warning('Failed sending event to echo - '.$class, array('exception'=>get_class($e), 'message'=>$e->getMessage()));
+            throw $e;
+        }
+    }
+
+    /**
      * Get hits analytics from echo
      * @param $class
      * @param $opts optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
