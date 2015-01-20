@@ -119,7 +119,7 @@ class EchoClient
      * @return bool
      * @throws \Exception
      */
-    public function getRecentEvents($class, $key=null, $value=null, $limit=25)
+    public function getRecentEvents($class=null, $key=null, $value=null, $limit=25)
     {
         $baseUrl = $this->getBaseUrl();
 
