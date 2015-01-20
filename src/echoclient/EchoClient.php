@@ -112,11 +112,11 @@ class EchoClient
 
     /**
      * Get most recent events of $class with property matching $key and $value, up to a $limit
-     * @param $class
-     * @param null $key
-     * @param null $value
+     * @param string|null $class
+     * @param string|null $key
+     * @param string|null $value
      * @param int $limit
-     * @return bool
+     * @return array
      * @throws \Exception
      */
     public function getRecentEvents($class=null, $key=null, $value=null, $limit=25)
