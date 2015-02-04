@@ -121,7 +121,10 @@ class EchoClient
      */
     public function getRecentEvents($class=null, $key=null, $value=null, $limit=25)
     {
-        $baseUrl = $this->getBaseUrl();
+        if (!empty($class))
+        {
+            $class = ECHO_CLASS_PREFIX.$class;
+        }
 
         if (!$baseUrl)
         {
