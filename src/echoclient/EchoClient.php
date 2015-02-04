@@ -61,6 +61,11 @@ class EchoClient
         {
             throw new \Exception('Missing define: PERSONA_TOKENCACHE_DB');
         }
+
+        if (!defined('ECHO_CLASS_PREFIX'))
+        {
+            define('ECHO_CLASS_PREFIX','');
+        }
     }
 
     /**
@@ -73,6 +78,7 @@ class EchoClient
      */
     public function createEvent($class, $source, array $props=array(), $userId = null)
     {
+        $class = ECHO_CLASS_PREFIX.$class;
         $baseUrl = $this->getBaseUrl();
 
         if (!$baseUrl)
@@ -125,6 +131,8 @@ class EchoClient
         {
             $class = ECHO_CLASS_PREFIX.$class;
         }
+
+        $baseUrl = $this->getBaseUrl();
 
         if (!$baseUrl)
         {
@@ -239,6 +247,8 @@ class EchoClient
      */
     protected function getAnalytics($class,$type,$opts=array())
     {
+        $class = ECHO_CLASS_PREFIX.$class;
+
         if (!in_array($type,array(self::ECHO_ANALYTICS_HITS,self::ECHO_ANALYTICS_AVG,self::ECHO_ANALYTICS_MAX,self::ECHO_ANALYTICS_SUM)))
         {
             throw new \Exception("You must supply a valid analytics type");
