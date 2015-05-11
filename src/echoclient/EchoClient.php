@@ -389,12 +389,12 @@ class EchoClient
     /**
      * To allow mocking of the PersonaClient for testing.
      *
-     * @return \personaclient\PersonaClient
+     * @return Talis\Persona\Client\Tokens
      */
     protected function getPersonaClient()
     {
         if (!isset($this->personaClient)) {
-            $this->personaClient = new \personaclient\PersonaClient(array(
+            $this->personaClient = new \Talis\Persona\Client\Tokens(array(
                 'persona_host' => PERSONA_HOST,
                 'persona_oauth_route' => PERSONA_OAUTH_ROUTE,
                 'tokencache_redis_host' => PERSONA_TOKENCACHE_HOST,
