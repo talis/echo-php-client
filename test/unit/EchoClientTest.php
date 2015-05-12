@@ -49,7 +49,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
     {
         $this->setRequiredDefines();
 
-        $stubPersonaClient = $this->getMock('\personaclient\PersonaClient', array(), array(), '', false);
+        $stubPersonaClient = $this->getMock('\Talis\Persona\Client\Tokens', array(), array(), '', false);
         $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
 
         $response = new \Guzzle\Http\Message\Response('202');
@@ -73,7 +73,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
     {
         $this->setRequiredDefines();
 
-        $stubPersonaClient = $this->getMock('\personaclient\PersonaClient', array(), array(), '', false);
+        $stubPersonaClient = $this->getMock('\Talis\Persona\Client\Tokens', array(), array(), '', false);
         $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
 
         $expectedEvent = array("class"=>"test.expected.event");
@@ -101,7 +101,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
     {
         $this->setRequiredDefines();
 
-        $stubPersonaClient = $this->getMock('\personaclient\PersonaClient', array(), array(), '', false);
+        $stubPersonaClient = $this->getMock('\Talis\Persona\Client\Tokens', array(), array(), '', false);
         $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
 
         $response = new \Guzzle\Http\Message\Response('200');
@@ -127,7 +127,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
     {
         $this->setRequiredDefines();
 
-        $stubPersonaClient = $this->getMock('\personaclient\PersonaClient', array(), array(), '', false);
+        $stubPersonaClient = $this->getMock('\Talis\Persona\Client\Tokens', array(), array(), '', false);
         $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
 
         $response = new \Guzzle\Http\Message\Response('200');
