@@ -1,8 +1,13 @@
 language: php
 php:
+- 5.6
 - 5.5
 - 5.4
 - 5.3
 install:
 - ant init
 script: ant test
+notifications:
+  hipchat:
+    rooms:
+      secure: QBgI6oLp0yDoNL3sdxrlmJOBOSnKw/CiPUjCSOSQ6tZrkxrGn4HhTamh72SdRHc/9/Pf5bCSHvNgJ1ZCtiGBkj6imj9iRGsHIdAcPH5Obl24qF8QtKqSxVYToMM+IRK85nIqpWXnaGFmqNASiwgz6b2EynbxxQEQulaK4ypfiAU=
