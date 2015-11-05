@@ -186,6 +186,41 @@ class EchoClient
         }
     }
 
+    public function describeClassActions($class)
+    {
+      $class = ECHO_CLASS_PREFIX.$class;
+      $baseUrl = $this->getBaseUrl();
+      if (!$baseUrl)
+      {
+          //Failing loudly when we can't describe class actions
+          $this->getLogger()->error('Echo server is not defined (missing ECHO_HOST define), cannot describe class actions - '.$class);
+          throw new \Exception("Missing ECHO_HOST define so cannot describe class actions");
+      }
+      $describeClassActionUrl = $baseUrl . '/classes/' . $class . '/actions';
+      $client = $this->getHttpClient();
+      $request = $client->get($describeClassActionUrl, $this->getHeaders(), array('connect_timeout'=>2));
+      $response = $request->send();
+      if ($response->isSuccessful())
+      {
+          $json = json_decode($response->getBody(true),true);
+          if ($json)
+          {
+              return $json;
+          }
+          else
+          {
+              $this->getLogger()->error('Failed getting class actions from echo, json did not decode - '.$class, array('body'=>$response->getBody(true),'responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestClass'=>$class, 'requestType'=>$type, 'requestOpts'=>$opts));
+              throw new \Exception('Failed getting class actions from echo, json did not decode - '.$response->getBody(true));
+          }
+      }
+      else
+      {
+          $this->getLogger()->error('Failed getting class actions from echo'.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true)));
+          throw new \Exception("Failed getting class actions from echo, response was not successful - " . $response->getBody(true));
+      }
+      
+    }
+
     /**
      * Get hits analytics from echo
      * @param $class

@@ -97,6 +97,34 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(array($expectedEvent),$result);
     }
 
+    function testDescribeClassActions()
+    {
+        $this->setRequiredDefines();
+
+        $stubPersonaClient = $this->getMock('\Talis\Persona\Client\Tokens', array(), array(), '', false);
+        $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
+        
+        $response = new \Guzzle\Http\Message\Response('200');
+        $response->setBody('["store","count"]');
+
+        $mockRequest = $this->getMock('\Guzzle\Http\Message\Request', array('send'), array('get',''));
+        $mockRequest->expects($this->once())->method('send')->will($this->returnValue($response));
+
+        $stubHttpClient = $this->getMock('\Guzzle\Http\Client', array('get'));
+        $stubHttpClient->expects($this->once())->method('get')->with('http://example.com:3002/1/classes/test.bookmark.createOnlyQuickAdd/actions')->will($this->returnValue($mockRequest));
+        
+        $echoClient = $this->getMock('\echoclient\EchoClient', array('getPersonaClient', 'getHttpClient'));
+        $echoClient->expects($this->once())->method('getPersonaClient')->will($this->returnValue($stubPersonaClient));
+        $echoClient->expects($this->once())->method('getHttpClient')->will($this->returnValue($stubHttpClient));
+
+        $result = $echoClient->describeClassActions('bookmark.createOnlyQuickAdd');
+        
+        $this->assertEquals($result, [ "store", "count"]);
+
+
+        
+    }
+
     function testHitsReturnsExpectedJSON()
     {
         $this->setRequiredDefines();
