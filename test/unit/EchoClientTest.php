@@ -119,7 +119,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
 
         $result = $echoClient->describeClassActions('bookmark.createOnlyQuickAdd');
         
-        $this->assertEquals($result, [ "store", "count"]);
+        $this->assertEquals($result, array( "store", "count"));
 
 
         
