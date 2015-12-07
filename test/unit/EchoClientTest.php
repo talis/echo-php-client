@@ -101,7 +101,9 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
     {
         $this->setRequiredDefines();
 
-        $stubPersonaClient = $this->getMock('\Talis\Persona\Client\Tokens', array(), array(), '', false);
+        $stubPersonaClient = $this->getMockBuilder('\Talis\Persona\Client\Tokens')
+            ->disableOriginalConstructor()
+            ->getMock();
         $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
 
         $expectedEvent = array("class"=>"test.expected.event");
@@ -160,7 +162,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $stubPersonaClient = $this->getMock('\Talis\Persona\Client\Tokens', array(), array(), '', false);
         $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
 
-        $expectedResult = "a,csv,file\nwith,some,data";
+        $expectedResult = "\"a\",\"csv\",\"file\"\n\"with\",\"some,\"data\"";
         $response = new \Guzzle\Http\Message\Response('200');
         $response->setBody($expectedResult);
 

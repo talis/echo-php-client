@@ -131,16 +131,17 @@ class EchoClient
     }
 
     /**
-     * @param null $class
-     * @param null $key
-     * @param null $value
+     * @param string $class
+     * @param string $key
+     * @param mixed $value
      * @param int $limit
      * @param int $offset
-     * @param null $format
+     * @param string $format
      * @throws \Exception
-     * @return array
+     * @return array|string - an array if the response is json, otherwise a string
      */
-    public function getEvents($class=null, $key=null, $value=null, $limit=25, $offset=0, $format=null){
+    public function getEvents($class=null, $key=null, $value=null, $limit=25, $offset=0, $format=null)
+    {
         if (!empty($class))
         {
             $class = ECHO_CLASS_PREFIX.$class;
@@ -227,10 +228,10 @@ class EchoClient
 
     /**
      * Get hits analytics from echo
-     * @param $class
-     * @param $opts optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
+     * @param string $class
+     * @param array $opts (optional) params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
      *
-     * @return mixed
+     * @return array|string
      * @throws \Exception
      */
     public function getHits($class, $opts = array(), $noCache = false)
@@ -240,10 +241,10 @@ class EchoClient
 
     /**
      * Get sum analytics from echo
-     * @param $class
-     * @param $opts optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
+     * @param string $class
+     * @param array $opts (optional) params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
      *
-     * @return mixed
+     * @return array|string
      * @throws \Exception
      */
     public function getSum($class, $opts = array())
@@ -253,10 +254,10 @@ class EchoClient
 
     /**
      * Get max analytics from echo
-     * @param $class
-     * @param $opts optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
+     * @param string $class
+     * @param array $opts (optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
      *
-     * @return mixed
+     * @return array|string
      * @throws \Exception
      */
     public function getMax($class, $opts = array())
@@ -266,10 +267,10 @@ class EchoClient
 
     /**
      * Get average analytics from echo
-     * @param $class
-     * @param $opts optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
+     * @param string $class
+     * @param array $opts (optional) params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
      *
-     * @return mixed
+     * @return array|string
      * @throws \Exception
      */
     public function getAverage($class, $opts = array())
@@ -281,7 +282,7 @@ class EchoClient
      * @param $class
      * @param $type
      * @param array $opts optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
-     * @return mixed
+     * @return array|string an array if the result is json, otherwise a string
      * @throws \Exception
      */
     protected function getAnalytics($class,$type,$opts=array(),$noCache = false)
