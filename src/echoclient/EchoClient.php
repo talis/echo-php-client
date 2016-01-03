@@ -127,6 +127,21 @@ class EchoClient
      */
     public function getRecentEvents($class=null, $key=null, $value=null, $limit=25)
     {
+       return $this->getEvents($class, $key, $value, $limit);
+    }
+
+    /**
+     * @param string $class
+     * @param string $key
+     * @param mixed $value
+     * @param int $limit
+     * @param int $offset
+     * @param string $format
+     * @throws \Exception
+     * @return array|string - an array if the response is json, otherwise a string
+     */
+    public function getEvents($class=null, $key=null, $value=null, $limit=25, $offset=0, $format=null)
+    {
         if (!empty($class))
         {
             $class = ECHO_CLASS_PREFIX.$class;
@@ -141,19 +156,34 @@ class EchoClient
             return false;
         }
 
-        $eventUrl = $baseUrl.'/events?limit='.$limit;
+        $eventUrl = $baseUrl.'/events?';
+        $params = array();
+        if (!empty($limit))
+        {
+            $params['limit'] = $limit;
+        }
+        if (!empty($offset))
+        {
+            $params['offset'] = $offset;
+        }
         if (!empty($class))
         {
-            $eventUrl .= '&class='.urlencode($class);
+            $params['class'] = $class;
         }
         if (!empty($key))
         {
-            $eventUrl .= '&key='.urlencode($key);
+            $params['key'] = $key;
         }
         if (!empty($value))
         {
-            $eventUrl .= '&value='.urlencode($value);
+            $params['value'] = $value;
         }
+        if (!empty($format))
+        {
+            $params['format'] = $format;
+        }
+
+        $eventUrl .= http_build_query($params);
 
         try
         {
@@ -163,12 +193,22 @@ class EchoClient
 
             if ($response->isSuccessful())
             {
-                $result = json_decode($response->getBody(true),true);
-                if (isset($result['events']))
-                {
-                    $this->getLogger()->debug('Success getting events from echo - '.$class);
-                    return $result['events'];
+                switch($format){
+                    case "csv":
+                        $result = $response->getBody(true);
+                        if($result){
+                            return $result;
+                        }
+                        break;
+                    default:
+                        $result = json_decode($response->getBody(true),true);
+                        if (isset($result['events']))
+                        {
+                            $this->getLogger()->debug('Success getting events from echo - '.$class);
+                            return $result['events'];
+                        }
                 }
+
                 $this->getLogger()->warning('Failed getting events from echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true)));
                 throw new \Exception("Failed getting events from echo, could not decode response");
             }
@@ -181,30 +221,30 @@ class EchoClient
         catch (\Exception $e)
         {
             // For any exception issue, just log the issue and fail silently.  E.g. failure to connect to echo server, or whatever.
-            $this->getLogger()->warning('Failed sending event to echo - '.$class, array('exception'=>get_class($e), 'message'=>$e->getMessage()));
+            $this->getLogger()->warning('Failed getting events from echo - '.$class, array('exception'=>get_class($e), 'message'=>$e->getMessage()));
             throw $e;
         }
     }
 
     /**
      * Get hits analytics from echo
-     * @param $class
-     * @param $opts optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
+     * @param string $class
+     * @param array $opts (optional) params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
      *
-     * @return mixed
+     * @return array|string
      * @throws \Exception
      */
-    public function getHits($class, $opts = array())
+    public function getHits($class, $opts = array(), $noCache = false)
     {
-        return $this->getAnalytics($class,self::ECHO_ANALYTICS_HITS,$opts);
+        return $this->getAnalytics($class,self::ECHO_ANALYTICS_HITS,$opts, $noCache);
     }
 
     /**
      * Get sum analytics from echo
-     * @param $class
-     * @param $opts optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
+     * @param string $class
+     * @param array $opts (optional) params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
      *
-     * @return mixed
+     * @return array|string
      * @throws \Exception
      */
     public function getSum($class, $opts = array())
@@ -214,10 +254,10 @@ class EchoClient
 
     /**
      * Get max analytics from echo
-     * @param $class
-     * @param $opts optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
+     * @param string $class
+     * @param array $opts (optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
      *
-     * @return mixed
+     * @return array|string
      * @throws \Exception
      */
     public function getMax($class, $opts = array())
@@ -227,10 +267,10 @@ class EchoClient
 
     /**
      * Get average analytics from echo
-     * @param $class
-     * @param $opts optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
+     * @param string $class
+     * @param array $opts (optional) params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
      *
-     * @return mixed
+     * @return array|string
      * @throws \Exception
      */
     public function getAverage($class, $opts = array())
@@ -242,10 +282,10 @@ class EchoClient
      * @param $class
      * @param $type
      * @param array $opts optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
-     * @return mixed
+     * @return array|string an array if the result is json, otherwise a string
      * @throws \Exception
      */
-    protected function getAnalytics($class,$type,$opts=array())
+    protected function getAnalytics($class,$type,$opts=array(),$noCache = false)
     {
         $class = ECHO_CLASS_PREFIX.$class;
 
@@ -272,21 +312,31 @@ class EchoClient
         }
 
         $client = $this->getHttpClient();
-        $request = $client->get($eventUrl, $this->getHeaders(), array('connect_timeout'=>10));
+        $request = $client->get($eventUrl, $this->getHeaders($noCache), array('connect_timeout'=>10));
         $response = $request->send();
 
         if ($response->isSuccessful())
         {
             $this->getLogger()->debug('Success getting analytics from echo - '.$type, $opts);
-            $json = json_decode($response->getBody(true),true);
-            if ($json)
-            {
-                return $json;
-            }
-            else
-            {
-                $this->getLogger()->warning('Failed getting analytics from echo, json did not decode - '.$class, array('body'=>$response->getBody(true),'responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestClass'=>$class, 'requestType'=>$type, 'requestOpts'=>$opts));
-                throw new \Exception("Could not get analytics from echo, json did not decode: ".$response->getBody(true));
+            $format = isset($opts['format']) ? $opts["format"] : 'json';
+            switch($format){
+                case "csv":
+                    $result = $response->getBody(true);
+                    if($result){
+                        return $result;
+                    }
+                    break;
+                default:
+                    $json = json_decode($response->getBody(true),true);
+                    if ($json)
+                    {
+                        return $json;
+                    }
+                    else
+                    {
+                        $this->getLogger()->warning('Failed getting analytics from echo, json did not decode - '.$class, array('body'=>$response->getBody(true),'responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestClass'=>$class, 'requestType'=>$type, 'requestOpts'=>$opts));
+                        throw new \Exception("Could not get analytics from echo, json did not decode: ".$response->getBody(true));
+                    }
             }
         }
         else
@@ -349,7 +399,7 @@ class EchoClient
      * Setup the header array for any request to echo
      * @return array
      */
-    protected function getHeaders()
+    protected function getHeaders($noCache = false)
     {
         $arrPersonaToken = $this->getPersonaClient()->obtainNewToken(OAUTH_USER, OAUTH_SECRET);
         $personaToken = $arrPersonaToken['access_token'];
@@ -358,6 +408,10 @@ class EchoClient
             'Content-Type'=>'application/json',
             'Authorization'=>'Bearer '.$personaToken
         );
+
+        if($noCache){
+            $headers['Cache-Control'] = 'none';
+        }
 
         return $headers;
     }
