@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "ca5331f87a06f699fc5857c01f96b836",
-    "content-hash": "75c7fe78ff429edaa506e3bb2e5158a6",
+    "hash": "3d810784c49f3ca0fa330c21c00ca420",
+    "content-hash": "d0c9d974ab25495447e0d47740017bfd",
     "packages": [
         {
             "name": "doctrine/annotations",
@@ -860,16 +860,16 @@
         },
         {
             "name": "talis/persona-php-client",
-            "version": "1.0.0",
+            "version": "2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/talis/persona-php-client.git",
-                "reference": "2265f9b063023b6c24f3cb42255874cbbbb9da1f"
+                "reference": "5f8908fd23ddbb76e82987fa9e69a428581e28de"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/talis/persona-php-client/zipball/2265f9b063023b6c24f3cb42255874cbbbb9da1f",
-                "reference": "2265f9b063023b6c24f3cb42255874cbbbb9da1f",
+                "url": "https://api.github.com/repos/talis/persona-php-client/zipball/5f8908fd23ddbb76e82987fa9e69a428581e28de",
+                "reference": "5f8908fd23ddbb76e82987fa9e69a428581e28de",
                 "shasum": ""
             },
             "require": {
@@ -908,10 +908,10 @@
                 "php"
             ],
             "support": {
-                "source": "https://github.com/talis/persona-php-client/tree/1.0.0",
+                "source": "https://github.com/talis/persona-php-client/tree/2.0.0",
                 "issues": "https://github.com/talis/persona-php-client/issues"
             },
-            "time": "2016-04-04 11:46:35"
+            "time": "2016-04-18 14:29:02"
         }
     ],
     "packages-dev": [
