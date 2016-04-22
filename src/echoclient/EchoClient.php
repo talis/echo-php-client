@@ -451,7 +451,7 @@ class EchoClient
 
             $userAgent = 'echo-php-client/';
             $composerFileContent = file_get_contents(
-                __DIR__. '/../../../composer.json'
+                __DIR__. '/../../composer.json'
             );
 
             if ($composerFileContent === false)
