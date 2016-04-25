@@ -16,7 +16,7 @@ Install the module via composer, by adding the following to your projects ``comp
         },
     ],
     "require" :{
-        "talis/echo-php-client": "~0.1"
+        "talis/echo-php-client": "~0.2"
     }
 }
 ```

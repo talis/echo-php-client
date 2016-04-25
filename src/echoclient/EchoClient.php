@@ -447,13 +447,15 @@ class EchoClient
      */
     protected function getPersonaClient()
     {
-        if (!isset($this->personaClient)) {
+        if (!isset($this->personaClient))
+        {
             $this->personaClient = new \Talis\Persona\Client\Tokens(array(
                 'persona_host' => PERSONA_HOST,
                 'persona_oauth_route' => PERSONA_OAUTH_ROUTE,
                 'tokencache_redis_host' => PERSONA_TOKENCACHE_HOST,
                 'tokencache_redis_port' => PERSONA_TOKENCACHE_PORT,
                 'tokencache_redis_db' => PERSONA_TOKENCACHE_DB,
+                'userAgent' => 'echo-php-client'
             ));
         }
         return $this->personaClient;
