@@ -1,6 +1,8 @@
 echo-php-client
 ===============
 
+[![Dependency Status](https://dependencyci.com/github/talis/echo-php-client/badge)](https://dependencyci.com/github/talis/echo-php-client)
+
 This is a PHP client library for Talis Echo, allowing you to submit events.
 
 ## Getting Started
