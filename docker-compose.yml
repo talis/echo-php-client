@@ -1,0 +1,88 @@
+version: '2'
+
+services:
+  echo:
+    image: talis/echo-api:latest
+    restart: always
+    links:
+      - persona
+      - mongo32
+      - redis
+    ports:
+      - "3000"
+    extra_hosts:
+      - "mongo:mongo32"
+  echo_worker:
+    image: talis/echo-worker:latest
+    restart: always
+    links:
+      - persona
+      - mongo32
+      - redis
+    ports:
+      - "3000"
+    extra_hosts:
+      - "mongo:mongo32"    
+  persona:
+    image: talis/persona:latest
+    restart: always
+    links:
+      - memcache
+      - mongo26
+    ports:
+      - "80"
+    extra_hosts:
+      - "persona:127.0.0.1"
+      - "mongo:mongo26"
+  persona_seed:
+    image: talis/persona:latest
+    links:
+      - memcache
+      - mongo26
+    ports:
+      - "80"
+    extra_hosts:
+      - "persona:127.0.0.1"
+      - "mongo:mongo26"
+    volumes:
+      - "/development/infra/docker/seeds/persona.php:/var/persona/seeds.php"
+    command: '/bin/bash -c "cd /var/persona && php -f seeds.php"'
+  memcache:
+    ports:
+      - "11211"
+    image: memcached
+    restart: always
+  redis:
+    image: redis
+    ports:
+      - "6379"
+    restart: always    
+  mongo32:
+    image: mongo:3.2.8
+    ports:
+      - "27017"
+    restart: always
+    command: "--storageEngine mmapv1"
+  mongo26:
+    image: mongo:2.6.12
+    ports:
+      - "27017"
+    restart: always
+  haproxy:
+    image: haproxy:1.5
+    links:
+      - persona
+      - echo
+    volumes:
+     - /development/infra/docker/echo/dev/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    ports:
+      - "80:80"
+  consul:
+    ports:
+      - "8500:8500"
+    image: consul
+    volumes:
+      - "/consul:/consul/data"
+    environment:
+      - CONSUL_LOCAL_CONFIG={"leave_on_terminate":true}
+    command: 'agent -server -dc talis_development -ui -bind 0.0.0.0 -client 0.0.0.0 -bootstrap-expect 1'
