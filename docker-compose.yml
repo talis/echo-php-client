@@ -2,7 +2,7 @@ version: '2'
 
 services:
   echo:
-    image: talis/echo-api:latest
+    image: talis/echo:api-latest
     restart: always
     links:
       - persona
@@ -13,7 +13,7 @@ services:
     extra_hosts:
       - "mongo:mongo32"
   echo_worker:
-    image: talis/echo-worker:latest
+    image: talis/echo:worker-latest
     restart: always
     links:
       - persona
@@ -22,7 +22,14 @@ services:
     ports:
       - "3000"
     extra_hosts:
-      - "mongo:mongo32"    
+      - "mongo:mongo32"
+  test:
+    image: echo-php-test
+    links:
+      - echo
+    volumes:
+      - "/development/echo-php-client:/var/echo-php-client"
+    command: "cd /var/echo-php-client && ant init && tail -f /dev/null"
   persona:
     image: talis/persona:latest
     restart: always
