@@ -1,6 +1,7 @@
 <?php
 namespace echoclient;
 
+use Doctrine\Common\Cache;
 use \Guzzle\Http\Client;
 use \Monolog\Handler\StreamHandler;
 use \Monolog\Logger;
@@ -18,6 +19,7 @@ class EchoClient
     const ECHO_ANALYTICS_AVG = 'average';
 
     private $personaClient;
+    private $tokenCacheClient;
     private $debugEnabled = false;
     private static $logger;
 
@@ -449,16 +451,34 @@ class EchoClient
     {
         if (!isset($this->personaClient))
         {
+            $cacheDriver = new \Doctrine\Common\Cache\PredisCache($this->getCacheClient());
             $this->personaClient = new \Talis\Persona\Client\Tokens(array(
                 'persona_host' => PERSONA_HOST,
                 'persona_oauth_route' => PERSONA_OAUTH_ROUTE,
-                'tokencache_redis_host' => PERSONA_TOKENCACHE_HOST,
-                'tokencache_redis_port' => PERSONA_TOKENCACHE_PORT,
-                'tokencache_redis_db' => PERSONA_TOKENCACHE_DB,
-                'userAgent' => 'echo-php-client'
+                'userAgent' => 'echo-php-client',
+                'cacheBackend' =>  $cacheDriver,
             ));
         }
         return $this->personaClient;
+    }
+
+    /**
+      * Lazy Loader, returns a predis client instance      
+      *        
+      * @return false|\Predis\Client a connected predis instance       
+      * @throws \Predis\Connection\ConnectionException if it cannot connect to the server specified        
+      */       
+    protected function getCacheClient()
+    {
+        if (!$this->tokenCacheClient) {     
+            $this->tokenCacheClient = new \Predis\Client(array(       
+                'scheme'   => 'tcp',      
+                'host'     => PERSONA_TOKENCACHE_HOST,     
+                'port'     => PERSONA_TOKENCACHE_PORT,     
+                'database' => PERSONA_TOKENCACHE_DB        
+            ));    
+        }     
+        return $this->tokenCacheClient;       
     }
 
     /**
