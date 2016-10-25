@@ -23,7 +23,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
     );
 
     /**
-     * Ensure that all the required define()'s are set before EchoClient can be used.
+     * Ensure that all the required define()s are set before EchoClient can be used.
      *
      * @dataProvider mandatoryDefines_provider
      */

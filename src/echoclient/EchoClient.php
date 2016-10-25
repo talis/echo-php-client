@@ -487,7 +487,7 @@ class EchoClient
     protected function getLogger()
     {
         if (self::$logger == null) {
-            // If an instance of the MonoLog Logger hasn't been passed in then default to stderr.
+            // If an instance of the MongoLog Logger hasn't been passed in then default to stderr.
             self::$logger = new Logger('echoclient');
             self::$logger->pushHandler(new StreamHandler('/tmp/echo-client.log', Logger::DEBUG));
         }
