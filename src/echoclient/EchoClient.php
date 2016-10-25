@@ -18,6 +18,7 @@ class EchoClient
     const ECHO_ANALYTICS_AVG = 'average';
 
     private $personaClient;
+    private $tokenCacheClient;
     private $debugEnabled = false;
     private static $logger;
 
@@ -27,97 +28,90 @@ class EchoClient
          * The calling project needs to have already set these up.
          */
 
-        if (!defined('OAUTH_USER'))
-        {
+        if (!defined('OAUTH_USER')) {
             throw new \Exception('Missing define: OAUTH_USER');
         }
 
-        if (!defined('OAUTH_SECRET'))
-        {
+        if (!defined('OAUTH_SECRET')) {
             throw new \Exception('Missing define: OAUTH_SECRET');
         }
 
-        if (!defined('PERSONA_HOST'))
-        {
+        if (!defined('PERSONA_HOST')) {
             throw new \Exception('Missing define: PERSONA_HOST');
         }
 
-        if (!defined('PERSONA_OAUTH_ROUTE'))
-        {
+        if (!defined('PERSONA_OAUTH_ROUTE')) {
             throw new \Exception('Missing define: PERSONA_OAUTH_ROUTE');
         }
 
-        if (!defined('PERSONA_TOKENCACHE_HOST'))
-        {
+        if (!defined('PERSONA_TOKENCACHE_HOST')) {
             throw new \Exception('Missing define: PERSONA_TOKENCACHE_HOST');
         }
 
-        if (!defined('PERSONA_TOKENCACHE_PORT'))
-        {
+        if (!defined('PERSONA_TOKENCACHE_PORT')) {
             throw new \Exception('Missing define: PERSONA_TOKENCACHE_PORT');
         }
 
-        if (!defined('PERSONA_TOKENCACHE_DB'))
-        {
+        if (!defined('PERSONA_TOKENCACHE_DB')) {
             throw new \Exception('Missing define: PERSONA_TOKENCACHE_DB');
         }
 
-        if (!defined('ECHO_CLASS_PREFIX'))
-        {
-            define('ECHO_CLASS_PREFIX','');
+        if (!defined('ECHO_CLASS_PREFIX')) {
+            define('ECHO_CLASS_PREFIX', '');
         }
     }
 
     /**
      * Add an event to echo
+     *
      * @param string $class
      * @param string $source
      * @param array $props
      * @param string|null $userId
      * @return bool True if successful, else false
      */
-    public function createEvent($class, $source, array $props=array(), $userId = null)
+    public function createEvent($class, $source, array $props = array(), $userId = null)
     {
-        $class = ECHO_CLASS_PREFIX.$class;
+        $class = ECHO_CLASS_PREFIX . $class;
         $baseUrl = $this->getBaseUrl();
 
-        if (!$baseUrl)
-        {
+        if (!$baseUrl) {
             // fail silently when creating events, should not stop user interaction as echo events are collected on a best-endeavours basis
-            $this->getLogger()->warning('Echo server is not defined (missing ECHO_HOST define), not sending event - '.$class, $props);
+            $this->getLogger()->warning('Echo server is not defined (missing ECHO_HOST define), not sending event - ' . $class,
+                $props);
             return false;
         }
 
-        $eventUrl = $baseUrl.'/events';
+        $eventUrl = $baseUrl . '/events';
         $eventJson = $this->getEventJson($class, $source, $props, $userId);
 
-        try
-        {
+        try {
             $client = $this->getHttpClient();
-            $request = $client->post($eventUrl, $this->getHeaders(), $eventJson, array('connect_timeout'=>2));
+            $request = $client->post($eventUrl, $this->getHeaders(), $eventJson, array('connect_timeout' => 2));
             $response = $request->send();
 
-            if ($response->isSuccessful())
-            {
-                $this->getLogger()->debug('Success sending event to echo - '.$class, $props);
+            if ($response->isSuccessful()) {
+                $this->getLogger()->debug('Success sending event to echo - ' . $class, $props);
                 return true;
-            }
-            else
-            {
-                $this->getLogger()->warning('Failed sending event to echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestProperties'=>$props));
+            } else {
+                $this->getLogger()->warning('Failed sending event to echo - ' . $class, array(
+                    'responseCode' => $response->getStatusCode(),
+                    'responseBody' => $response->getBody(true),
+                    'requestProperties' => $props
+                ));
                 return false;
             }
-        }
-        catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             // For any exception issue, just log the issue and fail silently.  E.g. failure to connect to echo server, or whatever.
-            $this->getLogger()->warning('Failed sending event to echo - '.$class, array('exception'=>get_class($e), 'message'=>$e->getMessage(), 'requestProperties'=>$props));
+            $this->getLogger()->warning('Failed sending event to echo - ' . $class,
+                array('exception' => get_class($e), 'message' => $e->getMessage(), 'requestProperties' => $props));
             return false;
         }
     }
 
     /**
      * Get most recent events of $class with property matching $key and $value, up to a $limit
+     *
      * @param string|null $class
      * @param string|null $key
      * @param string|null $value
@@ -125,9 +119,9 @@ class EchoClient
      * @return array
      * @throws \Exception
      */
-    public function getRecentEvents($class=null, $key=null, $value=null, $limit=25)
+    public function getRecentEvents($class = null, $key = null, $value = null, $limit = 25)
     {
-       return $this->getEvents($class, $key, $value, $limit);
+        return $this->getEvents($class, $key, $value, $limit);
     }
 
     /**
@@ -140,142 +134,130 @@ class EchoClient
      * @throws \Exception
      * @return array|string - an array if the response is json, otherwise a string
      */
-    public function getEvents($class=null, $key=null, $value=null, $limit=25, $offset=0, $format=null)
+    public function getEvents($class = null, $key = null, $value = null, $limit = 25, $offset = 0, $format = null)
     {
-        if (!empty($class))
-        {
-            $class = ECHO_CLASS_PREFIX.$class;
+        if (!empty($class)) {
+            $class = ECHO_CLASS_PREFIX . $class;
         }
 
         $baseUrl = $this->getBaseUrl();
 
-        if (!$baseUrl)
-        {
+        if (!$baseUrl) {
             // fail silently when creating events, should not stop user interaction as echo events are collected on a best-endeavours basis
-            $this->getLogger()->warning('Echo server is not defined (missing ECHO_HOST define), not getting events - '.$class);
+            $this->getLogger()->warning('Echo server is not defined (missing ECHO_HOST define), not getting events - ' . $class);
             return false;
         }
 
-        $eventUrl = $baseUrl.'/events?';
+        $eventUrl = $baseUrl . '/events?';
         $params = array();
-        if (!empty($limit))
-        {
+        if (!empty($limit)) {
             $params['limit'] = $limit;
         }
-        if (!empty($offset))
-        {
+        if (!empty($offset)) {
             $params['offset'] = $offset;
         }
-        if (!empty($class))
-        {
+        if (!empty($class)) {
             $params['class'] = $class;
         }
-        if (!empty($key))
-        {
+        if (!empty($key)) {
             $params['key'] = $key;
         }
-        if (!empty($value))
-        {
+        if (!empty($value)) {
             $params['value'] = $value;
         }
-        if (!empty($format))
-        {
+        if (!empty($format)) {
             $params['format'] = $format;
         }
 
         $eventUrl .= http_build_query($params);
 
-        try
-        {
+        try {
             $client = $this->getHttpClient();
-            $request = $client->get($eventUrl, $this->getHeaders(), array('connect_timeout'=>2));
+            $request = $client->get($eventUrl, $this->getHeaders(), array('connect_timeout' => 2));
             $response = $request->send();
 
-            if ($response->isSuccessful())
-            {
-                switch($format){
+            if ($response->isSuccessful()) {
+                switch ($format) {
                     case "csv":
                         $result = $response->getBody(true);
-                        if($result){
+                        if ($result) {
                             return $result;
                         }
                         break;
                     default:
-                        $result = json_decode($response->getBody(true),true);
-                        if (isset($result['events']))
-                        {
-                            $this->getLogger()->debug('Success getting events from echo - '.$class);
+                        $result = json_decode($response->getBody(true), true);
+                        if (isset($result['events'])) {
+                            $this->getLogger()->debug('Success getting events from echo - ' . $class);
                             return $result['events'];
                         }
                 }
 
-                $this->getLogger()->warning('Failed getting events from echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true)));
+                $this->getLogger()->warning('Failed getting events from echo - ' . $class,
+                    array('responseCode' => $response->getStatusCode(), 'responseBody' => $response->getBody(true)));
                 throw new \Exception("Failed getting events from echo, could not decode response");
-            }
-            else
-            {
-                $this->getLogger()->warning('Failed getting events from echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true)));
+            } else {
+                $this->getLogger()->warning('Failed getting events from echo - ' . $class,
+                    array('responseCode' => $response->getStatusCode(), 'responseBody' => $response->getBody(true)));
                 throw new \Exception("Failed getting events from echo, response was not successful");
             }
-        }
-        catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             // For any exception issue, just log the issue and fail silently.  E.g. failure to connect to echo server, or whatever.
-            $this->getLogger()->warning('Failed getting events from echo - '.$class, array('exception'=>get_class($e), 'message'=>$e->getMessage()));
+            $this->getLogger()->warning('Failed getting events from echo - ' . $class,
+                array('exception' => get_class($e), 'message' => $e->getMessage()));
             throw $e;
         }
     }
 
     /**
      * Get hits analytics from echo
+     *
      * @param string $class
      * @param array $opts (optional) params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
-     *
      * @return array|string
      * @throws \Exception
      */
     public function getHits($class, $opts = array(), $noCache = false)
     {
-        return $this->getAnalytics($class,self::ECHO_ANALYTICS_HITS,$opts, $noCache);
+        return $this->getAnalytics($class, self::ECHO_ANALYTICS_HITS, $opts, $noCache);
     }
 
     /**
      * Get sum analytics from echo
+     *
      * @param string $class
      * @param array $opts (optional) params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
-     *
      * @return array|string
      * @throws \Exception
      */
     public function getSum($class, $opts = array())
     {
-        return $this->getAnalytics($class,self::ECHO_ANALYTICS_SUM,$opts);
+        return $this->getAnalytics($class, self::ECHO_ANALYTICS_SUM, $opts);
     }
 
     /**
      * Get max analytics from echo
+     *
      * @param string $class
      * @param array $opts (optional params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
-     *
      * @return array|string
      * @throws \Exception
      */
     public function getMax($class, $opts = array())
     {
-        return $this->getAnalytics($class,self::ECHO_ANALYTICS_MAX,$opts);
+        return $this->getAnalytics($class, self::ECHO_ANALYTICS_MAX, $opts);
     }
 
     /**
      * Get average analytics from echo
+     *
      * @param string $class
      * @param array $opts (optional) params as per the echo docs @ http://docs.talisecho.apiary.io/#analytics
-     *
      * @return array|string
      * @throws \Exception
      */
     public function getAverage($class, $opts = array())
     {
-        return $this->getAnalytics($class,self::ECHO_ANALYTICS_AVG,$opts);
+        return $this->getAnalytics($class, self::ECHO_ANALYTICS_AVG, $opts);
     }
 
     /**
@@ -285,70 +267,82 @@ class EchoClient
      * @return array|string an array if the result is json, otherwise a string
      * @throws \Exception
      */
-    protected function getAnalytics($class,$type,$opts=array(),$noCache = false)
+    protected function getAnalytics($class, $type, $opts = array(), $noCache = false)
     {
-        $class = ECHO_CLASS_PREFIX.$class;
+        $class = ECHO_CLASS_PREFIX . $class;
 
-        if (!in_array($type,array(self::ECHO_ANALYTICS_HITS,self::ECHO_ANALYTICS_AVG,self::ECHO_ANALYTICS_MAX,self::ECHO_ANALYTICS_SUM)))
-        {
+        if (!in_array($type, array(
+            self::ECHO_ANALYTICS_HITS,
+            self::ECHO_ANALYTICS_AVG,
+            self::ECHO_ANALYTICS_MAX,
+            self::ECHO_ANALYTICS_SUM
+        ))
+        ) {
             throw new \Exception("You must supply a valid analytics type");
         }
-        if (empty($class))
-        {
+        if (empty($class)) {
             throw new \Exception("You must supply a class");
         }
 
         $baseUrl = $this->getBaseUrl();
 
-        if (!$baseUrl)
-        {
+        if (!$baseUrl) {
             // fail noisily!
             throw new \Exception("Could not determine echo base URL");
         }
 
-        $eventUrl = $baseUrl.'/analytics/'.$type.'?class='.urlencode($class);
-        if (count($opts)>0) {
-            $eventUrl .= '&'.http_build_query($opts);
+        $eventUrl = $baseUrl . '/analytics/' . $type . '?class=' . urlencode($class);
+        if (count($opts) > 0) {
+            $eventUrl .= '&' . http_build_query($opts);
         }
 
         $client = $this->getHttpClient();
-        $request = $client->get($eventUrl, $this->getHeaders($noCache), array('connect_timeout'=>10));
+        $request = $client->get($eventUrl, $this->getHeaders($noCache), array('connect_timeout' => 10));
         $response = $request->send();
 
-        if ($response->isSuccessful())
-        {
-            $this->getLogger()->debug('Success getting analytics from echo - '.$type, $opts);
+        if ($response->isSuccessful()) {
+            $this->getLogger()->debug('Success getting analytics from echo - ' . $type, $opts);
             $format = isset($opts['format']) ? $opts["format"] : 'json';
-            switch($format){
+            switch ($format) {
                 case "csv":
                     $result = $response->getBody(true);
-                    if($result){
+                    if ($result) {
                         return $result;
                     }
                     break;
                 default:
-                    $json = json_decode($response->getBody(true),true);
-                    if ($json)
-                    {
+                    $json = json_decode($response->getBody(true), true);
+                    if ($json) {
                         return $json;
-                    }
-                    else
-                    {
-                        $this->getLogger()->warning('Failed getting analytics from echo, json did not decode - '.$class, array('body'=>$response->getBody(true),'responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestClass'=>$class, 'requestType'=>$type, 'requestOpts'=>$opts));
-                        throw new \Exception("Could not get analytics from echo, json did not decode: ".$response->getBody(true));
+                    } else {
+                        $this->getLogger()->warning('Failed getting analytics from echo, json did not decode - ' . $class,
+                            array(
+                                'body' => $response->getBody(true),
+                                'responseCode' => $response->getStatusCode(),
+                                'responseBody' => $response->getBody(true),
+                                'requestClass' => $class,
+                                'requestType' => $type,
+                                'requestOpts' => $opts
+                            ));
+                        throw new \Exception("Could not get analytics from echo, json did not decode: " . $response->getBody(true));
                     }
             }
-        }
-        else
-        {
-            $this->getLogger()->warning('Failed getting analytics from echo - '.$class, array('responseCode'=>$response->getStatusCode(), 'responseBody'=>$response->getBody(true), 'requestClass'=>$class, 'requestType'=>$type, 'requestOpts'=>$opts));
-            throw new \Exception("Could not get analytics from echo, statusCode: ".$response->getStatusCode());
+        } else {
+            $this->getLogger()->warning('Failed getting analytics from echo - ' . $class, array(
+                'responseCode' => $response->getStatusCode(),
+                'responseBody' => $response->getBody(true),
+                'requestClass' => $class,
+                'requestType' => $type,
+                'requestOpts' => $opts
+            ));
+            throw new \Exception("Could not get analytics from echo, statusCode: " . $response->getStatusCode());
         }
     }
 
     /**
      * Enable debug mode for this client.  If this is enabled we log things like the Persona client.
      * Only use in development, not production!
+     *
      * @param bool $bDebugEnabled Whether debug mode should be enabled or not (default = false)
      */
     public function setDebugEnabled($bDebugEnabled)
@@ -359,6 +353,7 @@ class EchoClient
     /**
      * Is debugging enabled for this class?
      * We log out things like the Persona token etc.  (Only to be used in development!)
+     *
      * @return bool
      */
     public function isDebugEnabled()
@@ -378,17 +373,17 @@ class EchoClient
 
     /**
      * Create a json encoded string that represents a echo event
+     *
      * @param string $class
      * @param string $source
      * @param array $props
      * @param string|null $userId
      * @return string json encoded echo event
      */
-    protected function getEventJson($class, $source, array $props=array(), $userId=null)
+    protected function getEventJson($class, $source, array $props = array(), $userId = null)
     {
-        $event = array('class'=>$class, 'source'=>$source, 'props'=>$props);
-        if(!empty($userId))
-        {
+        $event = array('class' => $class, 'source' => $source, 'props' => $props);
+        if (!empty($userId)) {
             $event['user'] = $userId;
         }
 
@@ -397,6 +392,8 @@ class EchoClient
 
     /**
      * Setup the header array for any request to echo
+     *
+     * @param bool $noCache
      * @return array
      */
     protected function getHeaders($noCache = false)
@@ -405,21 +402,25 @@ class EchoClient
         $personaToken = $arrPersonaToken['access_token'];
 
         $headers = array(
-            'Content-Type'=>'application/json',
-            'Authorization'=>'Bearer '.$personaToken
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . $personaToken
         );
 
-        if($noCache){
+        if ($noCache) {
             $headers['Cache-Control'] = 'none';
         }
 
         return $headers;
     }
 
+    /**
+     * Return the echo server base url
+     *
+     * @return false|string
+     */
     protected function getBaseUrl()
     {
-        if (!defined('ECHO_HOST'))
-        {
+        if (!defined('ECHO_HOST')) {
             /*
              * If no echo server is defined then log the event for debugging purposes...
              */
@@ -427,7 +428,7 @@ class EchoClient
             return false;
         }
 
-        return ECHO_HOST.'/'.self::ECHO_API_VERSION;
+        return ECHO_HOST . '/' . self::ECHO_API_VERSION;
     }
 
     /**
@@ -443,22 +444,39 @@ class EchoClient
     /**
      * To allow mocking of the PersonaClient for testing.
      *
-     * @return Talis\Persona\Client\Tokens
+     * @return \Talis\Persona\Client\Tokens
      */
     protected function getPersonaClient()
     {
-        if (!isset($this->personaClient))
-        {
+        if (!isset($this->personaClient)) {
+            $cacheDriver = new \Doctrine\Common\Cache\PredisCache($this->getCacheClient());
             $this->personaClient = new \Talis\Persona\Client\Tokens(array(
                 'persona_host' => PERSONA_HOST,
                 'persona_oauth_route' => PERSONA_OAUTH_ROUTE,
-                'tokencache_redis_host' => PERSONA_TOKENCACHE_HOST,
-                'tokencache_redis_port' => PERSONA_TOKENCACHE_PORT,
-                'tokencache_redis_db' => PERSONA_TOKENCACHE_DB,
-                'userAgent' => 'echo-php-client'
+                'userAgent' => 'echo-php-client',
+                'cacheBackend' => $cacheDriver,
             ));
         }
         return $this->personaClient;
+    }
+
+    /**
+     * Lazy Loader, returns a predis client instance
+     *
+     * @return false|\Predis\Client a connected predis instance
+     * @throws \Predis\Connection\ConnectionException if it cannot connect to the server specified
+     */
+    protected function getCacheClient()
+    {
+        if (!isset($this->tokenCacheClient)) {
+            $this->tokenCacheClient = new \Predis\Client(array(
+                'scheme' => 'tcp',
+                'host' => PERSONA_TOKENCACHE_HOST,
+                'port' => PERSONA_TOKENCACHE_PORT,
+                'database' => PERSONA_TOKENCACHE_DB
+            ));
+        }
+        return $this->tokenCacheClient;
     }
 
     /**
@@ -468,11 +486,8 @@ class EchoClient
      */
     protected function getLogger()
     {
-        if (self::$logger == null)
-        {
-            /*
-             * If an instance of the MonoLog Logger hasn't been passed in then default to stderr.
-             */
+        if (self::$logger == null) {
+            // If an instance of the MongoLog Logger hasn't been passed in then default to stderr.
             self::$logger = new Logger('echoclient');
             self::$logger->pushHandler(new StreamHandler('/tmp/echo-client.log', Logger::DEBUG));
         }
