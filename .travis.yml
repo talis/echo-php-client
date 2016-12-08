@@ -10,4 +10,4 @@ script: ant test
 notifications:
   hipchat:
     rooms:
-      secure: QBgI6oLp0yDoNL3sdxrlmJOBOSnKw/CiPUjCSOSQ6tZrkxrGn4HhTamh72SdRHc/9/Pf5bCSHvNgJ1ZCtiGBkj6imj9iRGsHIdAcPH5Obl24qF8QtKqSxVYToMM+IRK85nIqpWXnaGFmqNASiwgz6b2EynbxxQEQulaK4ypfiAU=
+      secure: Ftqab466f6z+CIvcTokM9pfmuON9T+oFhUKi1eErw8CLZIxS7kWbjrPMzgAWMiQ10FvOFX2YFdTmVlO7gtjZ7dtdyiEC0EDby4RNK6hPvwWAv/YNhYfPwaiS9e+5l0kzK3Z8NZs0ELiQpC5LsLBM9f2Yo+opQPbn8erR9K41NMY=
