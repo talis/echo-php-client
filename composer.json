@@ -32,5 +32,5 @@
     "autoload": {
         "psr-4": {"echoclient\\": "src/echoclient"}
     },
-    "version":"0.2.12"
+    "version":"1.0.0"
 }
