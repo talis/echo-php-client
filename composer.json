@@ -24,7 +24,7 @@
         "predis/predis"  : "v0.8.5",
         "guzzle/guzzle": ">=3.8@stable",
         "doctrine/common": "^2.5",
-        "talis/persona-php-client": "^4.0.0"
+        "talis/persona-php-client": "4.0.0"
     },
     "require-dev": {
         "phpunit/phpunit": "~3.7@stable"
