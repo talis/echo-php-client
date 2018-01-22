@@ -131,8 +131,8 @@ class EchoClient
      * @param int $limit
      * @param int $offset
      * @param string $format
-     * @param string $to events up to a certain point in time
-     * @param string $from events from a certain point in time
+     * @param int $from events from a certain point in time (unix timestamp)
+     * @param int $to events up to a certain point in time (unix timestamp)
      * @throws \Exception
      * @return array|string - an array if the response is json, otherwise a string
      */
@@ -143,8 +143,8 @@ class EchoClient
         $limit = 25,
         $offset = 0,
         $format = null,
-        $to = null,
-        $from = null
+        $from = null,
+        $to = null
     ) {
         if (!empty($class)) {
             $class = ECHO_CLASS_PREFIX . $class;
@@ -179,10 +179,10 @@ class EchoClient
             $params['format'] = $format;
         }
         if (!empty($to)) {
-            $params['to'] = $to;
+            $params['to'] = date('c', $to);
         }
         if (!empty($from)) {
-            $params['from'] = $from;
+            $params['from'] = date('c', $from);
         }
 
         $eventUrl .= http_build_query($params);

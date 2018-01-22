@@ -181,6 +181,96 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($expectedResult,$result);
     }
 
+    function testGetEventsToCertainTime()
+    {
+        $this->setRequiredDefines();
+
+        $stubPersonaClient = $this->getMockBuilder('\Talis\Persona\Client\Tokens')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
+
+        $expectedEvent = array("class"=>"test.expected.event");
+        $response = new \Guzzle\Http\Message\Response('200');
+        $response->setBody(json_encode(array("events"=>array(
+            $expectedEvent
+        ))));
+
+        $mockRequest = $this->getMock('\Guzzle\Http\Message\Request', array('send'), array('get',''));
+        $mockRequest->expects($this->once())->method('send')->will($this->returnValue($response));
+
+        $stubHttpClient = $this->getMock('\Guzzle\Http\Client', array('get'));
+        $stubHttpClient->expects($this->once())->method('get')->with('http://example.com:3002/1/events?limit=25&class=test.expected.event&key=foo&value=bar&from=2018-01-22T15%3A17%3A28%2B00%3A00')->will($this->returnValue($mockRequest));
+
+        $echoClient = $this->getMock('\echoclient\EchoClient', array('getPersonaClient', 'getHttpClient'));
+        $echoClient->expects($this->once())->method('getPersonaClient')->will($this->returnValue($stubPersonaClient));
+        $echoClient->expects($this->once())->method('getHttpClient')->will($this->returnValue($stubHttpClient));
+
+        $result = $echoClient->getEvents("expected.event","foo","bar", 25, 0, null, 1516634248);
+
+        $this->assertEquals(array($expectedEvent),$result);
+    }
+
+    function testGetEventsFromCertainTime()
+    {
+        $this->setRequiredDefines();
+
+        $stubPersonaClient = $this->getMockBuilder('\Talis\Persona\Client\Tokens')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
+
+        $expectedEvent = array("class"=>"test.expected.event");
+        $response = new \Guzzle\Http\Message\Response('200');
+        $response->setBody(json_encode(array("events"=>array(
+            $expectedEvent
+        ))));
+
+        $mockRequest = $this->getMock('\Guzzle\Http\Message\Request', array('send'), array('get',''));
+        $mockRequest->expects($this->once())->method('send')->will($this->returnValue($response));
+
+        $stubHttpClient = $this->getMock('\Guzzle\Http\Client', array('get'));
+        $stubHttpClient->expects($this->once())->method('get')->with('http://example.com:3002/1/events?limit=25&class=test.expected.event&key=foo&value=bar&to=2018-01-22T15%3A17%3A28%2B00%3A00')->will($this->returnValue($mockRequest));
+
+        $echoClient = $this->getMock('\echoclient\EchoClient', array('getPersonaClient', 'getHttpClient'));
+        $echoClient->expects($this->once())->method('getPersonaClient')->will($this->returnValue($stubPersonaClient));
+        $echoClient->expects($this->once())->method('getHttpClient')->will($this->returnValue($stubHttpClient));
+
+        $result = $echoClient->getEvents("expected.event", "foo", "bar", 25, 0, null, null, 1516634248);
+
+        $this->assertEquals(array($expectedEvent),$result);
+    }
+
+    function testGetEventsFromCertainTimeToACertainTime()
+    {
+        $this->setRequiredDefines();
+
+        $stubPersonaClient = $this->getMockBuilder('\Talis\Persona\Client\Tokens')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
+
+        $expectedEvent = array("class"=>"test.expected.event");
+        $response = new \Guzzle\Http\Message\Response('200');
+        $response->setBody(json_encode(array("events"=>array(
+            $expectedEvent
+        ))));
+
+        $mockRequest = $this->getMock('\Guzzle\Http\Message\Request', array('send'), array('get',''));
+        $mockRequest->expects($this->once())->method('send')->will($this->returnValue($response));
+
+        $stubHttpClient = $this->getMock('\Guzzle\Http\Client', array('get'));
+        $stubHttpClient->expects($this->once())->method('get')->with('http://example.com:3002/1/events?limit=25&class=test.expected.event&key=foo&value=bar&to=2018-01-22T15%3A20%3A17%2B00%3A00&from=2018-01-22T15%3A17%3A28%2B00%3A00')->will($this->returnValue($mockRequest));
+
+        $echoClient = $this->getMock('\echoclient\EchoClient', array('getPersonaClient', 'getHttpClient'));
+        $echoClient->expects($this->once())->method('getPersonaClient')->will($this->returnValue($stubPersonaClient));
+        $echoClient->expects($this->once())->method('getHttpClient')->will($this->returnValue($stubHttpClient));
+
+        $result = $echoClient->getEvents("expected.event", "foo", "bar", 25, 0, null, 1516634248, 1516634417);
+
+        $this->assertEquals(array($expectedEvent),$result);
+    }
+
     function testHitsReturnsExpectedJSON()
     {
         $this->setRequiredDefines();
