@@ -131,11 +131,21 @@ class EchoClient
      * @param int $limit
      * @param int $offset
      * @param string $format
+     * @param int $from events from a certain point in time (unix timestamp)
+     * @param int $to events up to a certain point in time (unix timestamp)
      * @throws \Exception
      * @return array|string - an array if the response is json, otherwise a string
      */
-    public function getEvents($class = null, $key = null, $value = null, $limit = 25, $offset = 0, $format = null)
-    {
+    public function getEvents(
+        $class = null,
+        $key = null,
+        $value = null,
+        $limit = 25,
+        $offset = 0,
+        $format = null,
+        $from = null,
+        $to = null
+    ) {
         if (!empty($class)) {
             $class = ECHO_CLASS_PREFIX . $class;
         }
@@ -167,6 +177,12 @@ class EchoClient
         }
         if (!empty($format)) {
             $params['format'] = $format;
+        }
+        if (!empty($to)) {
+            $params['to'] = date('c', $to);
+        }
+        if (!empty($from)) {
+            $params['from'] = date('c', $from);
         }
 
         $eventUrl .= http_build_query($params);
