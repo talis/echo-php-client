@@ -68,9 +68,10 @@ class EchoClient
      * @param string $source
      * @param array $props
      * @param string|null $userId
+     * @param string|null $timestamp
      * @return bool True if successful, else false
      */
-    public function createEvent($class, $source, array $props = array(), $userId = null)
+    public function createEvent($class, $source, array $props = array(), $userId = null, $timestamp=null)
     {
         $class = ECHO_CLASS_PREFIX . $class;
         $baseUrl = $this->getBaseUrl();
@@ -394,13 +395,18 @@ class EchoClient
      * @param string $source
      * @param array $props
      * @param string|null $userId
+     * @param string|null $timestamp
      * @return string json encoded echo event
      */
-    protected function getEventJson($class, $source, array $props = array(), $userId = null)
+    protected function getEventJson($class, $source, array $props = array(), $userId = null, $timestamp)
     {
         $event = array('class' => $class, 'source' => $source, 'props' => $props);
         if (!empty($userId)) {
             $event['user'] = $userId;
+        }
+
+        if (!empty($timestamp)) {
+            $event['timestamp'] = $timestamp;
         }
 
         return json_encode($event);
