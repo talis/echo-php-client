@@ -71,7 +71,7 @@ class EchoClient
      * @param string|null $timestamp
      * @return bool True if successful, else false
      */
-    public function createEvent($class, $source, array $props = array(), $userId = null, $timestamp=null)
+    public function createEvent($class, $source, array $props = array(), $userId = null, $timestamp = null)
     {
         $class = ECHO_CLASS_PREFIX . $class;
         $baseUrl = $this->getBaseUrl();
