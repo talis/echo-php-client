@@ -95,6 +95,12 @@ class EchoClient
             throw new \Exception("Batch of events exceeds the maximum allowed size");
         }
 
+        foreach ($events as $event) {
+            if (!$event instanceof \echoclient\EchoEvent) {
+                throw new \Exception("Batch must only contain EchoEvent objects");
+            }
+        }
+
         $eventsJson = json_encode($events, true);
 
         return $this->sendJsonEventDataToEcho($eventsJson);

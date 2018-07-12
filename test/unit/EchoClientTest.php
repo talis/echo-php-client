@@ -176,6 +176,22 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $echoClient->createEvents($events);
     }
 
+    /**
+     *
+     * @expectedException Exception
+     * @expectedExceptionMessage Batch must only contain EchoEvent objects
+     */
+    public function testCreateEventsThrowsExceptionIfBatchContainsNonEchoEvents()
+    {
+        $this->setRequiredDefines();
+
+        $events = [];
+        $events[] = (object) array('a'=>'b');
+
+        $echoClient = new \echoclient\EchoClient();
+        $echoClient->createEvents($events);
+    }
+
 
     function testRecentEvents()
     {
