@@ -47,6 +47,9 @@ class EchoEventTest extends PHPUnit_Framework_TestCase
         ];
     }
 
+    /**
+     * @test Verifies that the event is serialized correctly into json
+     */
     public function testEchoEventSerialization()
     {
 
@@ -68,6 +71,10 @@ class EchoEventTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, json_encode($event, true));
     }
 
+    /**
+     * @test Verifies that the event is serialized correctly into json but does
+     * not include a user if no user is specified
+     */
     public function testEchoEventSerializationShouldNotIncludeUserIfNotSpecified()
     {
 
@@ -87,6 +94,10 @@ class EchoEventTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, json_encode($event, true));
     }
 
+    /**
+     * @test Verifies that the event is serialized correctly into json but does
+     * not include a timestamp if no timestamp is specified
+     */
     public function testEchoEventSerializationShouldNotIncludTimestampIfNotSpecified()
     {
 
