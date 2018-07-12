@@ -61,7 +61,15 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
             'Content-Type' => 'application/json',
             'Authorization' => 'Bearer some-token'
         );
-        $expectedEventJson = '{"class":"test.some.class","source":"some-source","props":{"foo":"bar"}}';
+        $expectedEventJson = json_encode(array(
+            'class' => 'test.some.class',
+            'source' => 'some-source',
+            'props' => array(
+                'foo' => 'bar'
+            ),
+            'user' => 'some-user',
+            'timestamp' => '1531381642499'
+        ));
         $expectedConnectTimeout = array('connect_timeout' => 2);
 
         $stubHttpClient = $this->getMock('\Guzzle\Http\Client', array('post'));
@@ -76,7 +84,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $echoClient->expects($this->once())->method('getPersonaClient')->will($this->returnValue($stubPersonaClient));
         $echoClient->expects($this->once())->method('getHttpClient')->will($this->returnValue($stubHttpClient));
 
-        $bSent = $echoClient->createEvent('some.class', 'some-source', array('foo'=>'bar'));
+        $bSent = $echoClient->createEvent('some.class', 'some-source', array('foo'=>'bar'), 'some-user', '1531381642499');
 
         $this->assertTrue($bSent);
     }
