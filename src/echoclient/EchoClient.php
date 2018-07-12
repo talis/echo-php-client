@@ -5,6 +5,8 @@ use \Guzzle\Http\Client;
 use \Monolog\Handler\StreamHandler;
 use \Monolog\Logger;
 
+use \echoclient\EchoEvent;
+
 /**
  * Sends events to Echo, if an echo server is enabled.
  */
@@ -16,6 +18,7 @@ class EchoClient
     const ECHO_ANALYTICS_MAX = 'max';
     const ECHO_ANALYTICS_SUM = 'sum';
     const ECHO_ANALYTICS_AVG = 'average';
+    const ECHO_MAX_BATCH_EVENTS = 100;
 
     private $personaClient;
     private $tokenCacheClient;
@@ -62,7 +65,7 @@ class EchoClient
     }
 
     /**
-     * Add an event to echo
+     * Adds a single event to echo
      *
      * @param string $class
      * @param string $source
@@ -74,40 +77,27 @@ class EchoClient
     public function createEvent($class, $source, array $props = array(), $userId = null, $timestamp = null)
     {
         $class = ECHO_CLASS_PREFIX . $class;
-        $baseUrl = $this->getBaseUrl();
-
-        if (!$baseUrl) {
-            // fail silently when creating events, should not stop user interaction as echo events are collected on a best-endeavours basis
-            $this->getLogger()->warning('Echo server is not defined (missing ECHO_HOST define), not sending event - ' . $class,
-                $props);
-            return false;
-        }
-
-        $eventUrl = $baseUrl . '/events';
         $eventJson = $this->getEventJson($class, $source, $props, $userId, $timestamp);
 
-        try {
-            $client = $this->getHttpClient();
-            $request = $client->post($eventUrl, $this->getHeaders(), $eventJson, array('connect_timeout' => 2));
-            $response = $request->send();
+        return $this->sendJsonEventDataToEcho($eventJson);
+    }
 
-            if ($response->isSuccessful()) {
-                $this->getLogger()->debug('Success sending event to echo - ' . $class, $props);
-                return true;
-            } else {
-                $this->getLogger()->warning('Failed sending event to echo - ' . $class, array(
-                    'responseCode' => $response->getStatusCode(),
-                    'responseBody' => $response->getBody(true),
-                    'requestProperties' => $props
-                ));
-                return false;
-            }
-        } catch (\Exception $e) {
-            // For any exception issue, just log the issue and fail silently.  E.g. failure to connect to echo server, or whatever.
-            $this->getLogger()->warning('Failed sending event to echo - ' . $class,
-                array('exception' => get_class($e), 'message' => $e->getMessage(), 'requestProperties' => $props));
-            return false;
+    /**
+     * Adds multiple events to echo
+     *
+     * @param EchoEvent[] $events An array of EchoEvent objects
+     * @return bool True if successful, else false
+     */
+    public function createEvents(array $events)
+    {
+        if (count($events) > self::ECHO_MAX_BATCH_EVENTS) {
+            $this->getLogger()->warning('Batch contains more than ' . self::ECHO_MAX_BATCH_EVENTS . ' events');
+            throw new \Exception("Batch of events exceeds the maximum allowed size");
         }
+
+        $eventsJson = json_encode($events, true);
+
+        return $this->sendJsonEventDataToEcho($eventsJson);
     }
 
     /**
@@ -433,6 +423,48 @@ class EchoClient
         }
 
         return $headers;
+    }
+
+    /**
+     * Sends json encoded events data to echo
+     *
+     * @param string $eventsData The json encoded events data to send
+     * @return bool True if successful, else false
+     */
+    protected function sendJsonEventDataToEcho($eventsData)
+    {
+        $baseUrl = $this->getBaseUrl();
+
+        if (!$baseUrl) {
+            // fail silently when creating events, should not stop user interaction as echo events are collected on a best-endeavours basis
+            $this->getLogger()->warning('Echo server is not defined (missing ECHO_HOST define), not sending events');
+            return false;
+        }
+
+        $eventUrl = $baseUrl . '/events';
+
+        try {
+            $client = $this->getHttpClient();
+            $request = $client->post($eventUrl, $this->getHeaders(), $eventsData, array('connect_timeout' => 2));
+            $response = $request->send();
+
+            if ($response->isSuccessful()) {
+                $this->getLogger()->debug('Success sending events to echo');
+                return true;
+            } else {
+                $this->getLogger()->warning('Failed sending events to echo', array(
+                    'responseCode' => $response->getStatusCode(),
+                    'responseBody' => $response->getBody(true),
+                    'requestProperties' => $props
+                ));
+                return false;
+            }
+        } catch (\Exception $e) {
+            // For any exception issue, just log the issue and fail silently.  E.g. failure to connect to echo server, or whatever.
+            $this->getLogger()->warning('Failed sending events to echo',
+                array('exception' => get_class($e), 'message' => $e->getMessage(), 'events' => $eventsData));
+            return false;
+        }
     }
 
     /**

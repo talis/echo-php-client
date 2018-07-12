@@ -89,6 +89,94 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($bSent);
     }
 
+    function testCreateEvents()
+    {
+        $this->setRequiredDefines();
+
+        $stubPersonaClient = $this->getMock('\Talis\Persona\Client\Tokens', array(), array(), '', false);
+        $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
+
+        $response = new \Guzzle\Http\Message\Response('202');
+
+        $mockRequest = $this->getMock('\Guzzle\Http\Message\Request', array('send'), array('post',''));
+        $mockRequest->expects($this->once())->method('send')->will($this->returnValue($response));
+
+        $expectedHeaders = array(
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer some-token'
+        );
+        $expectedEventJson = json_encode(array(
+            array(
+                'class' => 'test.foo',
+                'source' => 'bar',
+                'props' => array(
+                    'baz' => 'box'
+                ),
+                'user' => 'joe',
+                'timestamp' => '1531381642499'
+            ),
+            array(
+                'class' => 'test.foob',
+                'source' => 'barb',
+                'props' => array(
+                    'bazb' => 'boxb'
+                ),
+                'user' => 'joeb',
+                'timestamp' => '1531381642499'
+            ),
+            array(
+                'class' => 'test.fooc',
+                'source' => 'barc',
+                'props' => array(
+                    'bazc' => 'boxc'
+                ),
+                'user' => 'joec',
+                'timestamp' => '1531381642499'
+            )
+        ));
+
+        $expectedConnectTimeout = array('connect_timeout' => 2);
+
+        $stubHttpClient = $this->getMock('\Guzzle\Http\Client', array('post'));
+        $stubHttpClient->expects($this->once())->method('post')->with(
+            'http://example.com:3002/1/events',
+            $expectedHeaders,
+            $expectedEventJson,
+            $expectedConnectTimeout
+        )->will($this->returnValue($mockRequest));
+
+        $echoClient = $this->getMock('\echoclient\EchoClient', array('getPersonaClient', 'getHttpClient'));
+        $echoClient->expects($this->once())->method('getPersonaClient')->will($this->returnValue($stubPersonaClient));
+        $echoClient->expects($this->once())->method('getHttpClient')->will($this->returnValue($stubHttpClient));
+
+        $events = array();
+        $events[] = new \echoclient\EchoEvent('foo', 'bar', array('baz' => 'box'), 'joe', '1531381642499');
+        $events[] = new \echoclient\EchoEvent('foob', 'barb', array('bazb' => 'boxb'), 'joeb', '1531381642499');
+        $events[] = new \echoclient\EchoEvent('fooc', 'barc', array('bazc' => 'boxc'), 'joec', '1531381642499');
+        $bSent = $echoClient->createEvents($events);
+
+        $this->assertTrue($bSent);
+    }
+
+    /**
+     *
+     * @expectedException Exception
+     * @expectedExceptionMessage Batch of events exceeds the maximum allowed size
+     */
+    public function testCreateEventsThrowsExceptionIfBatchContainsTooManyEvents()
+    {
+        $this->setRequiredDefines();
+
+        $events = [];
+        for ($i = 0; $i < 101; $i++) {
+            $events[] = new \echoclient\EchoEvent('foo', 'bar', array('baz' => 'box'), 'joe', '1531381642499');
+        }
+
+        $echoClient = new \echoclient\EchoClient();
+        $echoClient->createEvents($events);
+    }
+
+
     function testRecentEvents()
     {
         $this->setRequiredDefines();
