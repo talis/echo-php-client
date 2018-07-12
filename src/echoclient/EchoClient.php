@@ -398,7 +398,7 @@ class EchoClient
      * @param string|null $timestamp
      * @return string json encoded echo event
      */
-    protected function getEventJson($class, $source, array $props = array(), $userId = null, $timestamp)
+    protected function getEventJson($class, $source, array $props = array(), $userId = null, $timestamp = null)
     {
         $event = array('class' => $class, 'source' => $source, 'props' => $props);
         if (!empty($userId)) {
