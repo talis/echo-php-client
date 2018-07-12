@@ -19,6 +19,7 @@ class EchoClient
     const ECHO_ANALYTICS_SUM = 'sum';
     const ECHO_ANALYTICS_AVG = 'average';
     const ECHO_MAX_BATCH_EVENTS = 100;
+    const ECHO_MAX_BATCH_SIZE_IN_BYTES = 1000000;
 
     private $personaClient;
     private $tokenCacheClient;
@@ -102,6 +103,12 @@ class EchoClient
         }
 
         $eventsJson = json_encode($events, true);
+
+        // strlen returns no. bytes in a string.
+        $sizeOfBatch = strlen(utf8_decode($eventsJson));
+        if ($sizeOfBatch > self::ECHO_MAX_BATCH_SIZE_IN_BYTES) {
+            throw new \Exception("Batch must be less than 1mb in size");
+        }
 
         return $this->sendJsonEventDataToEcho($eventsJson);
     }
