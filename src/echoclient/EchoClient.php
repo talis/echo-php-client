@@ -84,7 +84,7 @@ class EchoClient
         }
 
         $eventUrl = $baseUrl . '/events';
-        $eventJson = $this->getEventJson($class, $source, $props, $userId);
+        $eventJson = $this->getEventJson($class, $source, $props, $userId, $timestamp);
 
         try {
             $client = $this->getHttpClient();

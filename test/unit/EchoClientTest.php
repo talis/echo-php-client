@@ -57,8 +57,20 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $mockRequest = $this->getMock('\Guzzle\Http\Message\Request', array('send'), array('post',''));
         $mockRequest->expects($this->once())->method('send')->will($this->returnValue($response));
 
+        $expectedHeaders = array(
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer some-token'
+        );
+        $expectedEventJson = '{"class":"test.some.class","source":"some-source","props":{"foo":"bar"}}';
+        $expectedConnectTimeout = array('connect_timeout' => 2);
+
         $stubHttpClient = $this->getMock('\Guzzle\Http\Client', array('post'));
-        $stubHttpClient->expects($this->once())->method('post')->with('http://example.com:3002/1/events')->will($this->returnValue($mockRequest));
+        $stubHttpClient->expects($this->once())->method('post')->with(
+            'http://example.com:3002/1/events',
+            $expectedHeaders,
+            $expectedEventJson,
+            $expectedConnectTimeout
+        )->will($this->returnValue($mockRequest));
 
         $echoClient = $this->getMock('\echoclient\EchoClient', array('getPersonaClient', 'getHttpClient'));
         $echoClient->expects($this->once())->method('getPersonaClient')->will($this->returnValue($stubPersonaClient));
