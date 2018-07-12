@@ -55,7 +55,7 @@ docker build -t "echo-php-client:dev" --build-arg git_oauth_token=<yout github o
 # When the above has build successfully you can run and connect to the container
 docker run -v /path/to/echo-php-client:/var/echo-php-client -i -t echo-php-client:dev /bin/bash
 
-# The inside the container
+# Then inside the container
 
 ant init
 ant test
