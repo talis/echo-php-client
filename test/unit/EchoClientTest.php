@@ -95,20 +95,22 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
     {
         $this->setRequiredDefines();
 
-        $stubPersonaClient = $this->getMock('\Talis\Persona\Client\Tokens', array(), array(), '', false);
-        $stubPersonaClient->expects($this->once())->method('obtainNewToken')->will($this->returnValue(array('access_token'=>'some-token')));
+        $stubPersonaClient = $this->getMock('\Talis\Persona\Client\Tokens', [], [], '', false);
+        $stubPersonaClient->expects($this->once())
+            ->method('obtainNewToken')
+            ->will($this->returnValue(['access_token'=>'some-token']));
 
         $response = new \Guzzle\Http\Message\Response('202');
 
-        $mockRequest = $this->getMock('\Guzzle\Http\Message\Request', array('send'), array('post',''));
+        $mockRequest = $this->getMock('\Guzzle\Http\Message\Request', ['send'], ['post','']);
         $mockRequest->expects($this->once())->method('send')->will($this->returnValue($response));
 
-        $expectedHeaders = array(
+        $expectedHeaders = [
             'Content-Type' => 'application/json',
             'Authorization' => 'Bearer some-token'
-        );
-        $expectedEventJson = json_encode(array(
-            array(
+        ];
+        $expectedEventJson = json_encode([
+            [
                 'class' => 'test.foo',
                 'source' => 'bar',
                 'props' => array(
@@ -116,8 +118,8 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
                 ),
                 'user' => 'joe',
                 'timestamp' => '1531381642499'
-            ),
-            array(
+            ],
+            [
                 'class' => 'test.foob',
                 'source' => 'barb',
                 'props' => array(
@@ -125,8 +127,8 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
                 ),
                 'user' => 'joeb',
                 'timestamp' => '1531381642499'
-            ),
-            array(
+            ],
+            [
                 'class' => 'test.fooc',
                 'source' => 'barc',
                 'props' => array(
@@ -134,12 +136,12 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
                 ),
                 'user' => 'joec',
                 'timestamp' => '1531381642499'
-            )
-        ));
+            ]
+        ]);
 
-        $expectedConnectTimeout = array('connect_timeout' => 2);
+        $expectedConnectTimeout = ['connect_timeout' => 2];
 
-        $stubHttpClient = $this->getMock('\Guzzle\Http\Client', array('post'));
+        $stubHttpClient = $this->getMock('\Guzzle\Http\Client', ['post']);
         $stubHttpClient->expects($this->once())->method('post')->with(
             'http://example.com:3002/1/events',
             $expectedHeaders,
@@ -147,14 +149,14 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
             $expectedConnectTimeout
         )->will($this->returnValue($mockRequest));
 
-        $echoClient = $this->getMock('\echoclient\EchoClient', array('getPersonaClient', 'getHttpClient'));
+        $echoClient = $this->getMock('\echoclient\EchoClient', ['getPersonaClient', 'getHttpClient']);
         $echoClient->expects($this->once())->method('getPersonaClient')->will($this->returnValue($stubPersonaClient));
         $echoClient->expects($this->once())->method('getHttpClient')->will($this->returnValue($stubHttpClient));
 
-        $events = array();
-        $events[] = new \echoclient\EchoEvent('foo', 'bar', array('baz' => 'box'), 'joe', '1531381642499');
-        $events[] = new \echoclient\EchoEvent('foob', 'barb', array('bazb' => 'boxb'), 'joeb', '1531381642499');
-        $events[] = new \echoclient\EchoEvent('fooc', 'barc', array('bazc' => 'boxc'), 'joec', '1531381642499');
+        $events = [];
+        $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531381642499');
+        $events[] = new \echoclient\EchoEvent('foob', 'barb', ['bazb' => 'boxb'], 'joeb', '1531381642499');
+        $events[] = new \echoclient\EchoEvent('fooc', 'barc', ['bazc' => 'boxc'], 'joec', '1531381642499');
         $bSent = $echoClient->sendBatchEvents($events);
 
         $this->assertTrue($bSent);
@@ -171,7 +173,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
 
         $events = [];
         for ($i = 0; $i < 101; $i++) {
-            $events[] = new \echoclient\EchoEvent('foo', 'bar', array('baz' => 'box'), 'joe', '1531381642499');
+            $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531381642499');
         }
 
         $echoClient = new \echoclient\EchoClient();
@@ -188,7 +190,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $this->setRequiredDefines();
 
         $events = [];
-        $events[] = (object) array('a'=>'b');
+        $events[] = (object) ['a'=>'b'];
 
         $echoClient = new \echoclient\EchoClient();
         $echoClient->sendBatchEvents($events);
