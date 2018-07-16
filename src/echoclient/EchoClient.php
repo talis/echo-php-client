@@ -103,7 +103,7 @@ class EchoClient
         $eventsJson = json_encode($events, true);
 
         // strlen returns no. bytes in a string.
-        $sizeOfBatch = strlen(utf8_decode($eventsJson));
+        $sizeOfBatch = $this->getStringSizeInBytes($eventsJson);
         if ($sizeOfBatch > self::ECHO_MAX_BATCH_SIZE_IN_BYTES) {
             throw new \Exception("Batch must be less than 1mb in size");
         }
@@ -449,7 +449,14 @@ class EchoClient
         } catch (\Exception $e) {
             // For any exception issue, just log the issue and fail silently.  E.g. failure to connect to echo server, or whatever.
             $this->getLogger()->warning('Failed sending events to echo',
-                array('exception' => get_class($e), 'message' => $e->getMessage(), 'events' => $eventsData));
+                [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                    'batchSize' => count(json_decode($eventsData)),
+                    'batchSizeBytes' => $this->getStringSizeInBytes($eventsData),
+                    'events' => $eventsData
+                ]
+            );
             return false;
         }
     }
@@ -535,4 +542,16 @@ class EchoClient
 
         return self::$logger;
     }
+
+    /**
+     * Returns the size of a given string in bytes
+     *
+     * @param string $input The string whose length we wish to compute
+     * @return integer The length of the string in bytes
+     */
+    protected function getStringSizeInBytes($input)
+    {
+        return strlen(utf8_decode($input));
+    }
+
 }
