@@ -163,8 +163,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     *
-     * @expectedException Exception
+     * @expectedException InvalidArgumentException
      * @expectedExceptionMessage Batch of events exceeds the maximum allowed size
      */
     public function testSendBatchEventsThrowsExceptionIfBatchContainsTooManyEvents()
@@ -181,8 +180,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     *
-     * @expectedException Exception
+     * @expectedException InvalidArgumentException
      * @expectedExceptionMessage Batch must only contain EchoEvent objects
      */
     public function testSendBatchEventsThrowsExceptionIfBatchContainsNonEchoEvents()
@@ -196,6 +194,38 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $echoClient->sendBatchEvents($events);
     }
 
+    /**
+     * @expectedException InvalidArgumentException
+     * @expectedExceptionMessage Batch must be less than 1mb in size
+     */
+    function testSendBatchEventsThrowsExceptionIfBatchIsGreaterThanMaxBytesAllowed()
+    {
+        $this->setRequiredDefines();
+
+        $expectedEventJson = json_encode([
+            [
+                'class' => 'test.foo',
+                'source' => 'bar',
+                'props' => array(
+                    'baz' => 'box'
+                ),
+                'user' => 'joe',
+                'timestamp' => '1531381642499'
+            ]
+        ]);
+
+        $expectedConnectTimeout = ['connect_timeout' => 2];
+
+        $echoClient = $this->getMock('\echoclient\EchoClient', ['getStringSizeInBytes']);
+        $echoClient->expects($this->once())
+            ->method('getStringSizeInBytes')
+            ->with($expectedEventJson)
+            ->will($this->returnValue(1000001));
+
+        $events = [];
+        $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531381642499');
+        $echoClient->sendBatchEvents($events);
+    }
 
     function testRecentEvents()
     {

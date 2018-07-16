@@ -77,26 +77,33 @@ class EchoClient
      */
     public function createEvent($class, $source, array $props = array(), $userId = null, $timestamp = null)
     {
-        $event = new \echoclient\EchoEvent($class, $source, $props, $userId, $timestamp);
-        return $this->sendBatchEvents([$event]);
+        try {
+            $event = new \echoclient\EchoEvent($class, $source, $props, $userId, $timestamp);
+            return $this->sendBatchEvents([$event]);
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     /**
      * Adds multiple events to echo
      *
      * @param EchoEvent[] $events An array of EchoEvent objects
-     * @return bool True if successful, else false
+     * @return bool True if successful
+     * @throws InvalidArgumentException If the event data is malformed in any way
+     * @throws EchoHttpException If the server responded with an error
+     * @throws EchoCouldNotSendException If we were unable to send data to the Echo server
      */
     public function sendBatchEvents(array $events)
     {
         if (count($events) > self::ECHO_MAX_BATCH_EVENTS) {
             $this->getLogger()->warning('Batch contains more than ' . self::ECHO_MAX_BATCH_EVENTS . ' events');
-            throw new \Exception("Batch of events exceeds the maximum allowed size");
+            throw new \InvalidArgumentException("Batch of events exceeds the maximum allowed size");
         }
 
         foreach ($events as $event) {
             if (!$event instanceof \echoclient\EchoEvent) {
-                throw new \Exception("Batch must only contain EchoEvent objects");
+                throw new \InvalidArgumentException("Batch must only contain EchoEvent objects");
             }
         }
 
@@ -105,7 +112,7 @@ class EchoClient
         // strlen returns no. bytes in a string.
         $sizeOfBatch = $this->getStringSizeInBytes($eventsJson);
         if ($sizeOfBatch > self::ECHO_MAX_BATCH_SIZE_IN_BYTES) {
-            throw new \Exception("Batch must be less than 1mb in size");
+            throw new \InvalidArgumentException("Batch must be less than 1mb in size");
         }
 
         return $this->sendJsonEventDataToEcho($eventsJson);
@@ -416,7 +423,9 @@ class EchoClient
      * Sends json encoded events data to echo
      *
      * @param string $eventsData The json encoded events data to send
-     * @return bool True if successful, else false
+     * @return bool True if successful
+     * @throws EchoHttpException If the server responded with an error
+     * @throws EchoCouldNotSendException If we were unable to send data to the Echo server
      */
     protected function sendJsonEventDataToEcho($eventsData)
     {
@@ -432,19 +441,20 @@ class EchoClient
 
         try {
             $client = $this->getHttpClient();
-            $request = $client->post($eventUrl, $this->getHeaders(), $eventsData, array('connect_timeout' => 2));
+            $request = $client->post($eventUrl, $this->getHeaders(), $eventsData, ['connect_timeout' => 2]);
             $response = $request->send();
 
             if ($response->isSuccessful()) {
                 $this->getLogger()->debug('Success sending events to echo');
                 return true;
             } else {
-                $this->getLogger()->warning('Failed sending events to echo', array(
+                $this->getLogger()->warning('Failed sending events to echo', [
                     'responseCode' => $response->getStatusCode(),
                     'responseBody' => $response->getBody(true),
-                    'requestProperties' => $props
-                ));
-                return false;
+                    'batchSize' => count(json_decode($eventsData)),
+                    'batchSizeBytes' => $this->getStringSizeInBytes($eventsData),
+                ]);
+                throw new \echoclient\EchoHttpException($response->getStatusCode() . ' - ' . $response->getBody(true));
             }
         } catch (\Exception $e) {
             // For any exception issue, just log the issue and fail silently.  E.g. failure to connect to echo server, or whatever.
@@ -457,7 +467,7 @@ class EchoClient
                     'events' => $eventsData
                 ]
             );
-            return false;
+            throw new \echoclient\EchoCouldNotSendException('Failed sending events to echo. ' . $e->getMessage());
         }
     }
 
