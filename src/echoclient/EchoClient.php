@@ -451,17 +451,17 @@ class EchoClient
             if ($response->isSuccessful()) {
                 $this->getLogger()->debug('Success sending events to echo');
                 return true;
-            } else {
-                $this->getLogger()->warning('Failed sending events to echo', [
-                    'responseCode' => $response->getStatusCode(),
-                    'responseBody' => $response->getBody(true),
-                    'batchSize' => count(json_decode($eventsData)),
-                    'batchSizeBytes' => $this->getStringSizeInBytes($eventsData),
-                ]);
-                throw new \echoclient\EchoHttpException($response->getStatusCode() . ' - ' . $response->getBody(true));
             }
+
+            $this->getLogger()->warning('Failed sending events to echo', [
+                'responseCode' => $response->getStatusCode(),
+                'responseBody' => $response->getBody(true),
+                'batchSize' => count(json_decode($eventsData)),
+                'batchSizeBytes' => $this->getStringSizeInBytes($eventsData),
+            ]);
+
+            throw new \echoclient\EchoHttpException($response->getStatusCode() . ' - ' . $response->getBody(true));
         } catch (\Exception $e) {
-            // For any exception issue, just log the issue and fail silently.  E.g. failure to connect to echo server, or whatever.
             $this->getLogger()->warning('Failed sending events to echo',
                 [
                     'exception' => get_class($e),
@@ -471,6 +471,7 @@ class EchoClient
                     'events' => $eventsData
                 ]
             );
+
             throw new \echoclient\EchoCouldNotSendException('Failed sending events to echo. ' . $e->getMessage());
         }
     }
