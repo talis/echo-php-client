@@ -447,20 +447,6 @@ class EchoClient
             $client = $this->getHttpClient();
             $request = $client->post($eventUrl, $this->getHeaders(), $eventsData, ['connect_timeout' => 2]);
             $response = $request->send();
-
-            if ($response->isSuccessful()) {
-                $this->getLogger()->debug('Success sending events to echo');
-                return true;
-            }
-
-            $this->getLogger()->warning('Failed sending events to echo', [
-                'responseCode' => $response->getStatusCode(),
-                'responseBody' => $response->getBody(true),
-                'batchSize' => count(json_decode($eventsData)),
-                'batchSizeBytes' => $this->getStringSizeInBytes($eventsData),
-            ]);
-
-            throw new \echoclient\EchoHttpException($response->getStatusCode() . ' - ' . $response->getBody(true));
         } catch (\Exception $e) {
             $this->getLogger()->warning('Failed sending events to echo',
                 [
@@ -474,6 +460,22 @@ class EchoClient
 
             throw new \echoclient\EchoCouldNotSendException('Failed sending events to echo. ' . $e->getMessage());
         }
+
+        if ($response->isSuccessful()) {
+            $this->getLogger()->debug('Success sending events to echo');
+            return true;
+        }
+
+        // if the response wasn't successful then log the error
+        // and raise an exception
+        $this->getLogger()->warning('Failed sending events to echo', [
+            'responseCode' => $response->getStatusCode(),
+            'responseBody' => $response->getBody(true),
+            'batchSize' => count(json_decode($eventsData)),
+            'batchSizeBytes' => $this->getStringSizeInBytes($eventsData),
+        ]);
+
+        throw new \echoclient\EchoHttpException($response->getStatusCode() . ' - ' . $response->getBody(true));
     }
 
     /**
