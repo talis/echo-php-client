@@ -96,6 +96,10 @@ class EchoClient
      */
     public function sendBatchEvents(array $events)
     {
+        if (empty($events)) {
+            return true;
+        }
+
         if (count($events) > self::ECHO_MAX_BATCH_EVENTS) {
             $this->getLogger()->warning('Batch contains more than ' . self::ECHO_MAX_BATCH_EVENTS . ' events');
             throw new \InvalidArgumentException("Batch of events exceeds the maximum allowed size");

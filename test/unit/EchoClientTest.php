@@ -227,6 +227,15 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $echoClient->sendBatchEvents($events);
     }
 
+    function testSendBatchEventsReturnsTrueIfBatchIsEmpty()
+    {
+        $this->setRequiredDefines();
+
+        $events = [];
+        $echoClient = new \echoclient\EchoClient();
+        $this->assertTrue($echoClient->sendBatchEvents($events));
+    }
+
     function testRecentEvents()
     {
         $this->setRequiredDefines();
