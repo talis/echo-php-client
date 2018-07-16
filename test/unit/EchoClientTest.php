@@ -157,9 +157,9 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531381642499');
         $events[] = new \echoclient\EchoEvent('foob', 'barb', ['bazb' => 'boxb'], 'joeb', '1531381642499');
         $events[] = new \echoclient\EchoEvent('fooc', 'barc', ['bazc' => 'boxc'], 'joec', '1531381642499');
-        $bSent = $echoClient->sendBatchEvents($events);
+        $wasSent = $echoClient->sendBatchEvents($events);
 
-        $this->assertTrue($bSent);
+        $this->assertTrue($wasSent);
     }
 
     /**
