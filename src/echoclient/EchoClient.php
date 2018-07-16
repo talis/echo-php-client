@@ -390,30 +390,6 @@ class EchoClient
     }
 
     /**
-     * Create a json encoded string that represents a echo event
-     *
-     * @param string $class
-     * @param string $source
-     * @param array $props
-     * @param string|null $userId
-     * @param string|null $timestamp
-     * @return string json encoded echo event
-     */
-    protected function getEventJson($class, $source, array $props = array(), $userId = null, $timestamp = null)
-    {
-        $event = array('class' => $class, 'source' => $source, 'props' => $props);
-        if (!empty($userId)) {
-            $event['user'] = $userId;
-        }
-
-        if (!empty($timestamp)) {
-            $event['timestamp'] = $timestamp;
-        }
-
-        return json_encode($event);
-    }
-
-    /**
      * Setup the header array for any request to echo
      *
      * @param bool $noCache
