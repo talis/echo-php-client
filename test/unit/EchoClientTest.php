@@ -62,13 +62,15 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
             'Authorization' => 'Bearer some-token'
         );
         $expectedEventJson = json_encode(array(
-            'class' => 'test.some.class',
-            'source' => 'some-source',
-            'props' => array(
-                'foo' => 'bar'
-            ),
-            'user' => 'some-user',
-            'timestamp' => '1531381642499'
+            array(
+                'class' => 'test.some.class',
+                'source' => 'some-source',
+                'props' => array(
+                    'foo' => 'bar'
+                ),
+                'user' => 'some-user',
+                'timestamp' => '1531381642499'
+            )
         ));
         $expectedConnectTimeout = array('connect_timeout' => 2);
 

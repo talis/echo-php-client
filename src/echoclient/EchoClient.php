@@ -77,10 +77,8 @@ class EchoClient
      */
     public function createEvent($class, $source, array $props = array(), $userId = null, $timestamp = null)
     {
-        $class = ECHO_CLASS_PREFIX . $class;
-        $eventJson = $this->getEventJson($class, $source, $props, $userId, $timestamp);
-
-        return $this->sendJsonEventDataToEcho($eventJson);
+        $event = new \echoclient\EchoEvent($class, $source, $props, $userId, $timestamp);
+        return $this->createEvents([$event]);
     }
 
     /**
