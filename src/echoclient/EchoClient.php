@@ -78,7 +78,7 @@ class EchoClient
     public function createEvent($class, $source, array $props = array(), $userId = null, $timestamp = null)
     {
         $event = new \echoclient\EchoEvent($class, $source, $props, $userId, $timestamp);
-        return $this->createEvents([$event]);
+        return $this->sendBatchEvents([$event]);
     }
 
     /**
@@ -87,7 +87,7 @@ class EchoClient
      * @param EchoEvent[] $events An array of EchoEvent objects
      * @return bool True if successful, else false
      */
-    public function createEvents(array $events)
+    public function sendBatchEvents(array $events)
     {
         if (count($events) > self::ECHO_MAX_BATCH_EVENTS) {
             $this->getLogger()->warning('Batch contains more than ' . self::ECHO_MAX_BATCH_EVENTS . ' events');

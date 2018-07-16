@@ -91,7 +91,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($bSent);
     }
 
-    function testCreateEvents()
+    function testSendBatchEvents()
     {
         $this->setRequiredDefines();
 
@@ -155,7 +155,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $events[] = new \echoclient\EchoEvent('foo', 'bar', array('baz' => 'box'), 'joe', '1531381642499');
         $events[] = new \echoclient\EchoEvent('foob', 'barb', array('bazb' => 'boxb'), 'joeb', '1531381642499');
         $events[] = new \echoclient\EchoEvent('fooc', 'barc', array('bazc' => 'boxc'), 'joec', '1531381642499');
-        $bSent = $echoClient->createEvents($events);
+        $bSent = $echoClient->sendBatchEvents($events);
 
         $this->assertTrue($bSent);
     }
@@ -165,7 +165,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
      * @expectedException Exception
      * @expectedExceptionMessage Batch of events exceeds the maximum allowed size
      */
-    public function testCreateEventsThrowsExceptionIfBatchContainsTooManyEvents()
+    public function testSendBatchEventsThrowsExceptionIfBatchContainsTooManyEvents()
     {
         $this->setRequiredDefines();
 
@@ -175,7 +175,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         }
 
         $echoClient = new \echoclient\EchoClient();
-        $echoClient->createEvents($events);
+        $echoClient->sendBatchEvents($events);
     }
 
     /**
@@ -183,7 +183,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
      * @expectedException Exception
      * @expectedExceptionMessage Batch must only contain EchoEvent objects
      */
-    public function testCreateEventsThrowsExceptionIfBatchContainsNonEchoEvents()
+    public function testSendBatchEventsThrowsExceptionIfBatchContainsNonEchoEvents()
     {
         $this->setRequiredDefines();
 
@@ -191,7 +191,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $events[] = (object) array('a'=>'b');
 
         $echoClient = new \echoclient\EchoClient();
-        $echoClient->createEvents($events);
+        $echoClient->sendBatchEvents($events);
     }
 
 
