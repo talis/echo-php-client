@@ -52,8 +52,8 @@ git clone https://github.com/talis/echo-php-client.git
 cd echo-php-client
 docker build -t "echo-php-client:dev" --build-arg git_oauth_token=<yout github oauth token> .
 
-# When the above has build successfully you can run and connect to the container
-docker run -v /path/to/echo-php-client:/var/echo-php-client -i -t echo-php-client:dev /bin/bash
+# When the above has built successfully you can run and connect to the container
+docker run -v /path/on/host/machine/to/echo-php-client:/var/echo-php-client -i -t echo-php-client:dev /bin/bash
 
 # Then inside the container
 
