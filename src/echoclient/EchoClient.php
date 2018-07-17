@@ -90,9 +90,9 @@ class EchoClient
      *
      * @param EchoEvent[] $events An array of EchoEvent objects
      * @return bool True if successful
-     * @throws PayloadTooLargeException If the size, in bytes, of batched events exceeds configured limit of 100 events
+     * @throws PayloadTooLargeException If the size, in bytes, of batched events exceeds configured limit of 1mb
      * @throws BadEventDataException If any of the events in the batch are not EchoEvent objects
-     * @throws TooManyEventsInBatchException If the number of events in the batch exceeds configured limit
+     * @throws TooManyEventsInBatchException If the number of events in the batch exceeds configured limit of 100 events
      * @throws HttpException If the server responded with an error
      * @throws CouldNotSendDataException If we were unable to send data to the Echo server
      */
