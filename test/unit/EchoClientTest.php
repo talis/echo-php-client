@@ -57,16 +57,183 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $mockRequest = $this->getMock('\Guzzle\Http\Message\Request', array('send'), array('post',''));
         $mockRequest->expects($this->once())->method('send')->will($this->returnValue($response));
 
+        $expectedHeaders = array(
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer some-token'
+        );
+        $expectedEventJson = json_encode(array(
+            array(
+                'class' => 'test.some.class',
+                'source' => 'some-source',
+                'props' => array(
+                    'foo' => 'bar'
+                ),
+                'user' => 'some-user',
+                'timestamp' => '1531816712'
+            )
+        ));
+        $expectedConnectTimeout = array('connect_timeout' => 2);
+
         $stubHttpClient = $this->getMock('\Guzzle\Http\Client', array('post'));
-        $stubHttpClient->expects($this->once())->method('post')->with('http://example.com:3002/1/events')->will($this->returnValue($mockRequest));
+        $stubHttpClient->expects($this->once())->method('post')->with(
+            'http://example.com:3002/1/events',
+            $expectedHeaders,
+            $expectedEventJson,
+            $expectedConnectTimeout
+        )->will($this->returnValue($mockRequest));
 
         $echoClient = $this->getMock('\echoclient\EchoClient', array('getPersonaClient', 'getHttpClient'));
         $echoClient->expects($this->once())->method('getPersonaClient')->will($this->returnValue($stubPersonaClient));
         $echoClient->expects($this->once())->method('getHttpClient')->will($this->returnValue($stubHttpClient));
 
-        $bSent = $echoClient->createEvent('some.class', 'some-source', array('foo'=>'bar'));
+        $bSent = $echoClient->createEvent('some.class', 'some-source', array('foo'=>'bar'), 'some-user', '1531816712');
 
         $this->assertTrue($bSent);
+    }
+
+    function testSendBatchEvents()
+    {
+        $this->setRequiredDefines();
+
+        $stubPersonaClient = $this->getMock('\Talis\Persona\Client\Tokens', [], [], '', false);
+        $stubPersonaClient->expects($this->once())
+            ->method('obtainNewToken')
+            ->will($this->returnValue(['access_token'=>'some-token']));
+
+        $response = new \Guzzle\Http\Message\Response('202');
+
+        $mockRequest = $this->getMock('\Guzzle\Http\Message\Request', ['send'], ['post','']);
+        $mockRequest->expects($this->once())->method('send')->will($this->returnValue($response));
+
+        $expectedHeaders = [
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer some-token'
+        ];
+        $expectedEventJson = json_encode([
+            [
+                'class' => 'test.foo',
+                'source' => 'bar',
+                'props' => array(
+                    'baz' => 'box'
+                ),
+                'user' => 'joe',
+                'timestamp' => '1531816712'
+            ],
+            [
+                'class' => 'test.foob',
+                'source' => 'barb',
+                'props' => array(
+                    'bazb' => 'boxb'
+                ),
+                'user' => 'joeb',
+                'timestamp' => '1531816712'
+            ],
+            [
+                'class' => 'test.fooc',
+                'source' => 'barc',
+                'props' => array(
+                    'bazc' => 'boxc'
+                ),
+                'user' => 'joec',
+                'timestamp' => '1531816712'
+            ]
+        ]);
+
+        $expectedConnectTimeout = ['connect_timeout' => 2];
+
+        $stubHttpClient = $this->getMock('\Guzzle\Http\Client', ['post']);
+        $stubHttpClient->expects($this->once())->method('post')->with(
+            'http://example.com:3002/1/events',
+            $expectedHeaders,
+            $expectedEventJson,
+            $expectedConnectTimeout
+        )->will($this->returnValue($mockRequest));
+
+        $echoClient = $this->getMock('\echoclient\EchoClient', ['getPersonaClient', 'getHttpClient']);
+        $echoClient->expects($this->once())->method('getPersonaClient')->will($this->returnValue($stubPersonaClient));
+        $echoClient->expects($this->once())->method('getHttpClient')->will($this->returnValue($stubHttpClient));
+
+        $events = [];
+        $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531816712');
+        $events[] = new \echoclient\EchoEvent('foob', 'barb', ['bazb' => 'boxb'], 'joeb', '1531816712');
+        $events[] = new \echoclient\EchoEvent('fooc', 'barc', ['bazc' => 'boxc'], 'joec', '1531816712');
+        $wasSent = $echoClient->sendBatchEvents($events);
+
+        $this->assertTrue($wasSent);
+    }
+
+    /**
+     * @expectedException \echoclient\TooManyEventsInBatchException
+     * @expectedExceptionMessage Batch of events exceeds the maximum allowed size
+     */
+    public function testSendBatchEventsThrowsExceptionIfBatchContainsTooManyEvents()
+    {
+        $this->setRequiredDefines();
+
+        $events = [];
+        for ($i = 0; $i < 101; $i++) {
+            $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531816712');
+        }
+
+        $echoClient = new \echoclient\EchoClient();
+        $echoClient->sendBatchEvents($events);
+    }
+
+    /**
+     * @expectedException \echoclient\BadEventDataException
+     * @expectedExceptionMessage Batch must only contain EchoEvent objects
+     */
+    public function testSendBatchEventsThrowsExceptionIfBatchContainsNonEchoEvents()
+    {
+        $this->setRequiredDefines();
+
+        $events = [];
+        $events[] = (object) ['a'=>'b'];
+
+        $echoClient = new \echoclient\EchoClient();
+        $echoClient->sendBatchEvents($events);
+    }
+
+    /**
+     * @expectedException \echoclient\PayloadTooLargeException
+     * @expectedExceptionMessage Batch must be less than 1mb in size
+     */
+    function testSendBatchEventsThrowsExceptionIfBatchIsGreaterThanMaxBytesAllowed()
+    {
+        $this->setRequiredDefines();
+
+        $expectedEventJson = json_encode([
+            [
+                'class' => 'test.foo',
+                'source' => 'bar',
+                'props' => array(
+                    'baz' => 'box'
+                ),
+                'user' => 'joe',
+                'timestamp' => '1531816712'
+            ]
+        ]);
+
+        $expectedConnectTimeout = ['connect_timeout' => 2];
+
+        $echoClient = $this->getMock('\echoclient\EchoClient', ['getStringSizeInBytes']);
+        $echoClient->expects($this->once())
+            ->method('getStringSizeInBytes')
+            ->with($expectedEventJson)
+            ->will($this->returnValue(1000001));
+
+        $events = [];
+        $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531816712');
+        $echoClient->sendBatchEvents($events);
+    }
+
+    function testSendBatchEventsReturnsTrueIfBatchIsEmpty()
+    {
+        $this->setRequiredDefines();
+
+        $events = [];
+        $echoClient = new \echoclient\EchoClient();
+        $this->assertTrue($echoClient->sendBatchEvents($events));
     }
 
     function testRecentEvents()

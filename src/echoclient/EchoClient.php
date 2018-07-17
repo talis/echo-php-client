@@ -5,6 +5,8 @@ use \Guzzle\Http\Client;
 use \Monolog\Handler\StreamHandler;
 use \Monolog\Logger;
 
+use \echoclient\EchoEvent;
+
 /**
  * Sends events to Echo, if an echo server is enabled.
  */
@@ -16,6 +18,8 @@ class EchoClient
     const ECHO_ANALYTICS_MAX = 'max';
     const ECHO_ANALYTICS_SUM = 'sum';
     const ECHO_ANALYTICS_AVG = 'average';
+    const ECHO_MAX_BATCH_EVENTS = 100;
+    const ECHO_MAX_BATCH_SIZE_IN_BYTES = 1000000;
 
     private $personaClient;
     private $tokenCacheClient;
@@ -62,51 +66,62 @@ class EchoClient
     }
 
     /**
-     * Add an event to echo
+     * Adds a single event to echo
      *
      * @param string $class
      * @param string $source
      * @param array $props
      * @param string|null $userId
+     * @param string|null $timestamp
      * @return bool True if successful, else false
      */
-    public function createEvent($class, $source, array $props = array(), $userId = null)
+    public function createEvent($class, $source, array $props = array(), $userId = null, $timestamp = null)
     {
-        $class = ECHO_CLASS_PREFIX . $class;
-        $baseUrl = $this->getBaseUrl();
-
-        if (!$baseUrl) {
-            // fail silently when creating events, should not stop user interaction as echo events are collected on a best-endeavours basis
-            $this->getLogger()->warning('Echo server is not defined (missing ECHO_HOST define), not sending event - ' . $class,
-                $props);
-            return false;
-        }
-
-        $eventUrl = $baseUrl . '/events';
-        $eventJson = $this->getEventJson($class, $source, $props, $userId);
-
         try {
-            $client = $this->getHttpClient();
-            $request = $client->post($eventUrl, $this->getHeaders(), $eventJson, array('connect_timeout' => 2));
-            $response = $request->send();
-
-            if ($response->isSuccessful()) {
-                $this->getLogger()->debug('Success sending event to echo - ' . $class, $props);
-                return true;
-            } else {
-                $this->getLogger()->warning('Failed sending event to echo - ' . $class, array(
-                    'responseCode' => $response->getStatusCode(),
-                    'responseBody' => $response->getBody(true),
-                    'requestProperties' => $props
-                ));
-                return false;
-            }
+            $event = new \echoclient\EchoEvent($class, $source, $props, $userId, $timestamp);
+            return $this->sendBatchEvents([$event]);
         } catch (\Exception $e) {
-            // For any exception issue, just log the issue and fail silently.  E.g. failure to connect to echo server, or whatever.
-            $this->getLogger()->warning('Failed sending event to echo - ' . $class,
-                array('exception' => get_class($e), 'message' => $e->getMessage(), 'requestProperties' => $props));
             return false;
         }
+    }
+
+    /**
+     * Adds multiple events to echo
+     *
+     * @param EchoEvent[] $events An array of EchoEvent objects
+     * @return bool True if successful
+     * @throws PayloadTooLargeException If the size, in bytes, of batched events exceeds configured limit of 1mb
+     * @throws BadEventDataException If any of the events in the batch are not EchoEvent objects
+     * @throws TooManyEventsInBatchException If the number of events in the batch exceeds configured limit of 100 events
+     * @throws HttpException If the server responded with an error
+     * @throws CouldNotSendDataException If we were unable to send data to the Echo server
+     */
+    public function sendBatchEvents(array $events)
+    {
+        if (empty($events)) {
+            return true;
+        }
+
+        if (count($events) > self::ECHO_MAX_BATCH_EVENTS) {
+            $this->getLogger()->warning('Batch contains more than ' . self::ECHO_MAX_BATCH_EVENTS . ' events');
+            throw new \echoclient\TooManyEventsInBatchException("Batch of events exceeds the maximum allowed size");
+        }
+
+        foreach ($events as $event) {
+            if (!$event instanceof \echoclient\EchoEvent) {
+                throw new \echoclient\BadEventDataException("Batch must only contain EchoEvent objects");
+            }
+        }
+
+        $eventsJson = json_encode($events, true);
+
+        // strlen returns no. bytes in a string.
+        $sizeOfBatch = $this->getStringSizeInBytes($eventsJson);
+        if ($sizeOfBatch > self::ECHO_MAX_BATCH_SIZE_IN_BYTES) {
+            throw new \echoclient\PayloadTooLargeException("Batch must be less than 1mb in size");
+        }
+
+        return $this->sendJsonEventDataToEcho($eventsJson);
     }
 
     /**
@@ -388,25 +403,6 @@ class EchoClient
     }
 
     /**
-     * Create a json encoded string that represents a echo event
-     *
-     * @param string $class
-     * @param string $source
-     * @param array $props
-     * @param string|null $userId
-     * @return string json encoded echo event
-     */
-    protected function getEventJson($class, $source, array $props = array(), $userId = null)
-    {
-        $event = array('class' => $class, 'source' => $source, 'props' => $props);
-        if (!empty($userId)) {
-            $event['user'] = $userId;
-        }
-
-        return json_encode($event);
-    }
-
-    /**
      * Setup the header array for any request to echo
      *
      * @param bool $noCache
@@ -427,6 +423,61 @@ class EchoClient
         }
 
         return $headers;
+    }
+
+    /**
+     * Sends json encoded events data to echo
+     *
+     * @param string $eventsData The json encoded events data to send
+     * @return bool True if successful
+     * @throws EchoHttpException If the server responded with an error
+     * @throws EchoCouldNotSendException If we were unable to send data to the Echo server
+     */
+    protected function sendJsonEventDataToEcho($eventsData)
+    {
+        $baseUrl = $this->getBaseUrl();
+
+        if (!$baseUrl) {
+            // fail silently when creating events, should not stop user interaction as echo events are collected on a best-endeavours basis
+            $this->getLogger()->warning('Echo server is not defined (missing ECHO_HOST define), not sending events');
+            return false;
+        }
+
+        $eventUrl = $baseUrl . '/events';
+
+        try {
+            $client = $this->getHttpClient();
+            $request = $client->post($eventUrl, $this->getHeaders(), $eventsData, ['connect_timeout' => 2]);
+            $response = $request->send();
+        } catch (\Exception $e) {
+            $this->getLogger()->warning('Failed sending events to echo',
+                [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                    'batchSize' => count(json_decode($eventsData)),
+                    'batchSizeBytes' => $this->getStringSizeInBytes($eventsData),
+                    'events' => $eventsData
+                ]
+            );
+
+            throw new \echoclient\CouldNotSendDataException('Failed sending events to echo. ' . $e->getMessage());
+        }
+
+        if ($response->isSuccessful()) {
+            $this->getLogger()->debug('Success sending events to echo');
+            return true;
+        }
+
+        // if the response wasn't successful then log the error
+        // and raise an exception
+        $this->getLogger()->warning('Failed sending events to echo', [
+            'responseCode' => $response->getStatusCode(),
+            'responseBody' => $response->getBody(true),
+            'batchSize' => count(json_decode($eventsData)),
+            'batchSizeBytes' => $this->getStringSizeInBytes($eventsData),
+        ]);
+
+        throw new \echoclient\HttpException($response->getStatusCode() . ' - ' . $response->getBody(true));
     }
 
     /**
@@ -510,4 +561,16 @@ class EchoClient
 
         return self::$logger;
     }
+
+    /**
+     * Returns the size of a given string in bytes
+     *
+     * @param string $input The string whose length we wish to compute
+     * @return integer The length of the string in bytes
+     */
+    protected function getStringSizeInBytes($input)
+    {
+        return strlen(utf8_decode($input));
+    }
+
 }
