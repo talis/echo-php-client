@@ -90,9 +90,11 @@ class EchoClient
      *
      * @param EchoEvent[] $events An array of EchoEvent objects
      * @return bool True if successful
-     * @throws InvalidArgumentException If the event data is malformed in any way
-     * @throws EchoHttpException If the server responded with an error
-     * @throws EchoCouldNotSendException If we were unable to send data to the Echo server
+     * @throws PayloadTooLargeException If the size, in bytes, of batched events exceeds configured limit
+     * @throws BadEventDataException If any of the events in the batch are not EchoEvent objects
+     * @throws TooManyEventsInBatchException If the number of events in the batch exceeds configured limit
+     * @throws HttpException If the server responded with an error
+     * @throws CouldNotSendDataException If we were unable to send data to the Echo server
      */
     public function sendBatchEvents(array $events)
     {
@@ -102,12 +104,12 @@ class EchoClient
 
         if (count($events) > self::ECHO_MAX_BATCH_EVENTS) {
             $this->getLogger()->warning('Batch contains more than ' . self::ECHO_MAX_BATCH_EVENTS . ' events');
-            throw new \InvalidArgumentException("Batch of events exceeds the maximum allowed size");
+            throw new \echoclient\TooManyEventsInBatchException("Batch of events exceeds the maximum allowed size");
         }
 
         foreach ($events as $event) {
             if (!$event instanceof \echoclient\EchoEvent) {
-                throw new \InvalidArgumentException("Batch must only contain EchoEvent objects");
+                throw new \echoclient\BadEventDataException("Batch must only contain EchoEvent objects");
             }
         }
 
@@ -116,7 +118,7 @@ class EchoClient
         // strlen returns no. bytes in a string.
         $sizeOfBatch = $this->getStringSizeInBytes($eventsJson);
         if ($sizeOfBatch > self::ECHO_MAX_BATCH_SIZE_IN_BYTES) {
-            throw new \InvalidArgumentException("Batch must be less than 1mb in size");
+            throw new \echoclient\PayloadTooLargeException("Batch must be less than 1mb in size");
         }
 
         return $this->sendJsonEventDataToEcho($eventsJson);
@@ -458,7 +460,7 @@ class EchoClient
                 ]
             );
 
-            throw new \echoclient\EchoCouldNotSendException('Failed sending events to echo. ' . $e->getMessage());
+            throw new \echoclient\CouldNotSendDataException('Failed sending events to echo. ' . $e->getMessage());
         }
 
         if ($response->isSuccessful()) {
@@ -475,7 +477,7 @@ class EchoClient
             'batchSizeBytes' => $this->getStringSizeInBytes($eventsData),
         ]);
 
-        throw new \echoclient\EchoHttpException($response->getStatusCode() . ' - ' . $response->getBody(true));
+        throw new \echoclient\HttpException($response->getStatusCode() . ' - ' . $response->getBody(true));
     }
 
     /**

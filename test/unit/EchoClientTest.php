@@ -163,7 +163,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException InvalidArgumentException
+     * @expectedException \echoclient\TooManyEventsInBatchException
      * @expectedExceptionMessage Batch of events exceeds the maximum allowed size
      */
     public function testSendBatchEventsThrowsExceptionIfBatchContainsTooManyEvents()
@@ -180,7 +180,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException InvalidArgumentException
+     * @expectedException \echoclient\BadEventDataException
      * @expectedExceptionMessage Batch must only contain EchoEvent objects
      */
     public function testSendBatchEventsThrowsExceptionIfBatchContainsNonEchoEvents()
@@ -195,7 +195,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException InvalidArgumentException
+     * @expectedException \echoclient\PayloadTooLargeException
      * @expectedExceptionMessage Batch must be less than 1mb in size
      */
     function testSendBatchEventsThrowsExceptionIfBatchIsGreaterThanMaxBytesAllowed()
