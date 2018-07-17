@@ -69,7 +69,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
                     'foo' => 'bar'
                 ),
                 'user' => 'some-user',
-                'timestamp' => '1531381642499'
+                'timestamp' => '1531816712'
             )
         ));
         $expectedConnectTimeout = array('connect_timeout' => 2);
@@ -86,7 +86,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $echoClient->expects($this->once())->method('getPersonaClient')->will($this->returnValue($stubPersonaClient));
         $echoClient->expects($this->once())->method('getHttpClient')->will($this->returnValue($stubHttpClient));
 
-        $bSent = $echoClient->createEvent('some.class', 'some-source', array('foo'=>'bar'), 'some-user', '1531381642499');
+        $bSent = $echoClient->createEvent('some.class', 'some-source', array('foo'=>'bar'), 'some-user', '1531816712');
 
         $this->assertTrue($bSent);
     }
@@ -117,7 +117,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
                     'baz' => 'box'
                 ),
                 'user' => 'joe',
-                'timestamp' => '1531381642499'
+                'timestamp' => '1531816712'
             ],
             [
                 'class' => 'test.foob',
@@ -126,7 +126,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
                     'bazb' => 'boxb'
                 ),
                 'user' => 'joeb',
-                'timestamp' => '1531381642499'
+                'timestamp' => '1531816712'
             ],
             [
                 'class' => 'test.fooc',
@@ -135,7 +135,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
                     'bazc' => 'boxc'
                 ),
                 'user' => 'joec',
-                'timestamp' => '1531381642499'
+                'timestamp' => '1531816712'
             ]
         ]);
 
@@ -154,9 +154,9 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
         $echoClient->expects($this->once())->method('getHttpClient')->will($this->returnValue($stubHttpClient));
 
         $events = [];
-        $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531381642499');
-        $events[] = new \echoclient\EchoEvent('foob', 'barb', ['bazb' => 'boxb'], 'joeb', '1531381642499');
-        $events[] = new \echoclient\EchoEvent('fooc', 'barc', ['bazc' => 'boxc'], 'joec', '1531381642499');
+        $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531816712');
+        $events[] = new \echoclient\EchoEvent('foob', 'barb', ['bazb' => 'boxb'], 'joeb', '1531816712');
+        $events[] = new \echoclient\EchoEvent('fooc', 'barc', ['bazc' => 'boxc'], 'joec', '1531816712');
         $wasSent = $echoClient->sendBatchEvents($events);
 
         $this->assertTrue($wasSent);
@@ -172,7 +172,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
 
         $events = [];
         for ($i = 0; $i < 101; $i++) {
-            $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531381642499');
+            $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531816712');
         }
 
         $echoClient = new \echoclient\EchoClient();
@@ -210,7 +210,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
                     'baz' => 'box'
                 ),
                 'user' => 'joe',
-                'timestamp' => '1531381642499'
+                'timestamp' => '1531816712'
             ]
         ]);
 
@@ -223,7 +223,7 @@ class EchoClientTest extends PHPUnit_Framework_TestCase
             ->will($this->returnValue(1000001));
 
         $events = [];
-        $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531381642499');
+        $events[] = new \echoclient\EchoEvent('foo', 'bar', ['baz' => 'box'], 'joe', '1531816712');
         $echoClient->sendBatchEvents($events);
     }
 
