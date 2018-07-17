@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project default="all" name="echo-php-client" basedir=".">
+    <property environment="env" />
 
     <property name="src.dir" location="src"/>
     <property name="vendor.dir" location="vendor"/>
@@ -16,7 +17,7 @@
         <mkdir dir="${build.dir}"/>
     </target>
 
-    <target name="init" depends="install-composer" description="Set up the local environment, download required libs through Composer etc">
+    <target name="init" depends="install-composer,configure-composer-token" description="Set up the local environment, download required libs through Composer etc">
         <!-- Check for updates to Composer -->
         <exec executable="php" failonerror="true">
             <arg value="composer.phar"/>
@@ -41,6 +42,14 @@
             <arg value="-c"/>
             <arg value="curl -sS https://getcomposer.org/installer | php"/>
         </exec>
+    </target>
+
+    <target name="configure-composer-token" depends="check-composer" if="env.GH_TOKEN">
+      <echo message="Setting Github OAUTH Token to use" />
+      <exec executable="sh">
+            <arg value="-c"/>
+            <arg value="composer config -g github-oauth.github.com ${env.GH_TOKEN}"/>
+      </exec>
     </target>
 
     <target name="test" depends="clean, unittest" description="Run all the tests"/>
